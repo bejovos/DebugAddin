@@ -1,0 +1,30 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
+    <Metadata>
+        <Identity Id="DebugAddin.56520605-d9e0-4e3b-8f99-3c0c3d82a761" Version="1.15.2" Language="en-US" Publisher="Alexander Rezunov" />
+        <DisplayName>DebugAddin</DisplayName>
+        <Description xml:space="preserve">Debug addin.
+
+[1.14.1] Fixed exception if databse is not set.
+[1.14.0] Added possibility to open testable file at definition line.
+[1.13.0] Added possibility to set root folder. Double click opens file at predefined line position. Single Click highlights project in solution explorer.
+[1.12.2] Fixed dumping something with " or ' char
+[1.12.1] Added possibility to pass variable name to the dumper
+[1.11.1] Moved ShellExecute invocation to extension
+[1.10.1] Replaced LoadLibrary to odd number
+[1.9.1] Added GenerateAlgoTesterParams</Description>
+    </Metadata>
+    <Installation>
+        <InstallationTarget Id="Microsoft.VisualStudio.Community" Version="[15.0]" />
+    </Installation>
+    <Dependencies>
+        <Dependency Id="Microsoft.Framework.NDP" DisplayName="Microsoft .NET Framework" d:Source="Manual" Version="[4.5,)" />
+        <Dependency Id="Microsoft.VisualStudio.MPF.15.0" DisplayName="Visual Studio MPF 15.0" d:Source="Installed" Version="[15.0]" />
+    </Dependencies>
+    <Prerequisites>
+        <Prerequisite Id="Microsoft.VisualStudio.Component.CoreEditor" Version="[15.0,16.0)" DisplayName="Visual Studio core editor" />
+    </Prerequisites>
+    <Assets>
+        <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+    </Assets>
+</PackageManifest>
