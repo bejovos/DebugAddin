@@ -81,7 +81,7 @@ namespace DebugAddin
           foreach (EnvDTE90.Module module in process.Modules)
             if (module.Name.ToLower() == "kernel32.dll")
               {
-              address = module.LoadAddress + 0x1ED90; // sorry:)
+              address = module.LoadAddress + 0x1DDD0; // sorry:)
               break;
               }
 
@@ -143,6 +143,12 @@ namespace DebugAddin
         expression = (isPointer ? "" : "&") + propertyInfo[0].bstrFullName;
         Utils.PrintMessage("Dumper", "Constructed expression: " + expression);
         expression = dte.Debugger.GetExpression(expression).Value;
+        if (expression == "0" || expression == "???")
+          {
+          Utils.PrintMessage("Dumper", expression);
+          Utils.PrintMessage("Dumper", "Incorrect argument is ignored");
+          return 0;
+          }
         Utils.PrintMessage("Dumper", expression);
 
         global_expression = global_expression 

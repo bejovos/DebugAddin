@@ -27,6 +27,7 @@ namespace DebugAddin
   public sealed class DragAndDropPackage : Package
     {
     public const string PackageGuidString = "7f0d05e6-785c-4b2e-ae98-69df2a911976";
+    int hHook = 0;
 
 #pragma warning disable 618
     public DragAndDropPackage()
@@ -34,7 +35,7 @@ namespace DebugAddin
       messageId = RegisterWindowMessage("MyDragDropMessage32");
       // Create an instance of HookProc.
       hook = new HookProc(MouseHookProc);
-      var hHook = SetWindowsHookEx(4, hook, (System.IntPtr)0, AppDomain.GetCurrentThreadId());
+      hHook = SetWindowsHookEx(4, hook, (System.IntPtr)0, AppDomain.GetCurrentThreadId());
     }
 
     [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
@@ -81,13 +82,14 @@ namespace DebugAddin
 
     #region Package Members
 
-    /// <summary>
-    /// Initialization of the package; this method is called right after the package is sited, so this is the place
-    /// where you can put all the initialization code that rely on services provided by VisualStudio.
-    /// </summary>
     protected override void Initialize()
       {
-            base.Initialize();
+        base.Initialize();
+      }
+
+    protected override void Dispose(bool disposing)
+      {
+        UnhookWindowsHookEx(hHook);
       }
 
     #endregion
