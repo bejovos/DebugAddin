@@ -155,4 +155,13 @@
   <data name="2400" type="System.Resources.ResXFileRef, System.Windows.Forms">
     <value>..\CmdArgs\Resources\CommandlineArgsToolWindowPackage.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
+  <data name="3110" xml:space="preserve">
+    <value>ViewHistoryCommand Extension</value>
+  </data>
+  <data name="3112" xml:space="preserve">
+    <value>ViewHistoryCommand Visual Stuido Extension Detailed Info</value>
+  </data>
+  <data name="3400" type="System.Resources.ResXFileRef, System.Windows.Forms">
+    <value>..\ViewHistoryCommand\Resources\ViewHistoryCommandPackage.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+  </data>
 </root>

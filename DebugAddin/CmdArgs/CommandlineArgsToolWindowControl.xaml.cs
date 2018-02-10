@@ -386,6 +386,15 @@ namespace DebugAddin.CmdArgs
         item.Select(vsUISelectionType.vsUISelectionTypeSelect);
         dte.ToolWindows.SolutionExplorer.Parent.Activate();
         dte.ExecuteCommand("Build.BuildSelection");
+
+        foreach (EnvDTE.Window window in dte.Windows)
+          {
+          if (window.Caption.StartsWith("Pending Changes"))
+            {
+            window.Activate();
+            break;
+            }
+          }
         }
       catch (Exception ex)
         {
