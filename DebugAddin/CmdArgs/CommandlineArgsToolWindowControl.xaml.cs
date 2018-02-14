@@ -91,6 +91,9 @@ namespace DebugAddin.CmdArgs
       }
 
     BuildEvents buildEvents;
+    CommandEvents commandDebugStartWithoutDebuggingEvents;
+    CommandEvents commandDebugStartDebugTargetEvents;
+    CommandEvents commandDebugStartEvents;
     public CommandlineArgsToolWindowControl()
       {
       InitializeComponent();
@@ -100,6 +103,34 @@ namespace DebugAddin.CmdArgs
 
       buildEvents = dte.Events.BuildEvents;
       buildEvents.OnBuildDone += BuildEvents_OnBuildDone;
+      
+      var command = dte.Commands.Item("Debug.StartWithoutDebugging");
+      commandDebugStartWithoutDebuggingEvents = dte.Events.CommandEvents[command.Guid, command.ID];
+      commandDebugStartWithoutDebuggingEvents.BeforeExecute += BeforeDebugStarted;
+      command = dte.Commands.Item("Debug.StartDebugTarget");
+      commandDebugStartDebugTargetEvents = dte.Events.CommandEvents[command.Guid, command.ID];
+      commandDebugStartDebugTargetEvents.BeforeExecute += BeforeDebugStarted;
+      command = dte.Commands.Item("Debug.Start");
+      commandDebugStartEvents = dte.Events.CommandEvents[command.Guid, command.ID];
+      commandDebugStartEvents.BeforeExecute += BeforeDebugStarted;
+      }
+
+    private void BeforeDebugStarted(
+      string Guid, int ID, object CustomIn, object CustomOut, ref bool CancelDefault)
+      {
+      try
+        {
+        var testCase = GetTestCaseFromRow((dataGrid.SelectedItem as DataRowView).Row);
+        if (testCase == null)
+          return;
+
+        // generate params file
+        CreateParamsFile(testCase);
+        }
+      catch (Exception ex)
+        {
+        Utils.PrintMessage("Exception", ex.Message);
+        }
       }
 
     class ParsedRow
@@ -417,35 +448,39 @@ namespace DebugAddin.CmdArgs
         }
       }
 
+    private void CreateParamsFile(DataBaseRefresher.DataBase.TestCase testCase)
+      {
+      if (testCase != null)
+        {
+        string paramsFile = rootFolder + @"\MatSDK\AlgoTester\Intermediate\AlgoTesterParams.input";
+        var file = new StreamWriter(paramsFile);
+        file.WriteLine("--cases_root");
+        file.WriteLine(testCase.caseFolder);
+        file.WriteLine("--settings");
+        file.WriteLine(rootFolder + @"\MatSDK\AlgoTester\settings.config");
+        file.WriteLine("--bins_root");
+        file.WriteLine(rootFolder);
+        file.WriteLine("--restrictions");
+        file.WriteLine("");
+        file.WriteLine("--case");
+        file.WriteLine(testCase.caseName);
+        file.Close();
+        System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
+        pProcess.StartInfo.FileName = rootFolder + @"\MatSDK\AlgoTester\Utils\AlgoTester.exe";
+        pProcess.StartInfo.Arguments = "--paramsfile \"" + paramsFile + "\"";
+        pProcess.StartInfo.UseShellExecute = false;
+        pProcess.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
+        pProcess.StartInfo.CreateNoWindow = true;
+        pProcess.Start();
+        pProcess.WaitForExit();
+        }
+      }
+
     private void MenuItem_GenerateParamsFile_Click(object sender, System.Windows.RoutedEventArgs e)
       {
       try
         {
-        var testCase = GetTestCaseFromRow((dataGrid.SelectedItem as DataRowView).Row);
-        if (testCase != null)
-          {
-          string paramsFile = rootFolder + @"\MatSDK\AlgoTester\Intermediate\AlgoTesterParams.input";
-          var file = new StreamWriter(paramsFile);
-          file.WriteLine("--cases_root");
-          file.WriteLine(testCase.caseFolder);
-          file.WriteLine("--settings");
-          file.WriteLine(rootFolder + @"\MatSDK\AlgoTester\settings.config");
-          file.WriteLine("--bins_root");
-          file.WriteLine(rootFolder);
-          file.WriteLine("--restrictions");
-          file.WriteLine("");
-          file.WriteLine("--case");
-          file.WriteLine(testCase.caseName);
-          file.Close();
-          System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
-          pProcess.StartInfo.FileName = rootFolder + @"\MatSDK\AlgoTester\Utils\AlgoTester.exe";
-          pProcess.StartInfo.Arguments = "--paramsfile \"" + paramsFile + "\"";
-          pProcess.StartInfo.UseShellExecute = false;
-          pProcess.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
-          pProcess.StartInfo.CreateNoWindow = true;
-          pProcess.Start();
-          pProcess.WaitForExit();
-          }
+        CreateParamsFile(GetTestCaseFromRow((dataGrid.SelectedItem as DataRowView).Row));
         }
       catch (Exception ex)
         {

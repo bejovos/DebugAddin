@@ -135,7 +135,7 @@
     <value>DragAndDropPackage Visual Studio Extension Detailed Info</value>
   </data>
   <data name="400" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\DragAndDropPackage.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\DragAndDrop\Resources\DragAndDropPackage.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="1110" xml:space="preserve">
     <value>RuntimeDumperPackage Extension</value>
@@ -144,7 +144,7 @@
     <value>RuntimeDumperPackage Visual Stuido Extension Detailed Info</value>
   </data>
   <data name="1400" type="System.Resources.ResXFileRef, System.Windows.Forms">
-    <value>..\Resources\RuntimeDumperPackage.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
+    <value>..\RuntimeDumper\Resources\RuntimeDumperPackage.ico;System.Drawing.Icon, System.Drawing, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a</value>
   </data>
   <data name="2110" xml:space="preserve">
     <value>CommandlineArgsToolWindow Extension</value>

@@ -63,9 +63,9 @@
     <Compile Include="CmdArgs\CommandlineArgsToolWindowPackage.cs" />
     <Compile Include="CmdArgs\DataBaseRefresher.cs" />
     <Compile Include="CmdArgs\Utils.cs" />
-    <Compile Include="DragAndDropPackage.cs" />
+    <Compile Include="DragAndDrop\DragAndDropPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="RuntimeDumperPackage.cs" />
+    <Compile Include="RuntimeDumper\RuntimeDumperPackage.cs" />
     <Compile Include="ViewHistoryCommand\ViewHistoryCommand.cs" />
     <Compile Include="ViewHistoryCommand\ViewHistoryCommandPackage.cs" />
   </ItemGroup>
@@ -90,8 +90,8 @@
     <Content Include="CmdArgs\Resources\CommandlineArgsToolWindowCommand.png" />
     <Content Include="CmdArgs\Resources\CommandlineArgsToolWindowPackage.ico" />
     <Content Include="Package\index.html" />
-    <Content Include="Resources\DragAndDropPackage.ico" />
-    <Content Include="Resources\RuntimeDumperPackage.ico" />
+    <Content Include="DragAndDrop\Resources\DragAndDropPackage.ico" />
+    <Content Include="RuntimeDumper\Resources\RuntimeDumperPackage.ico" />
     <Content Include="Package\stylesheet.css" />
   </ItemGroup>
   <ItemGroup>
