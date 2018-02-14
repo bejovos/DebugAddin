@@ -32,7 +32,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       return null;
       }
@@ -86,7 +86,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }
 
@@ -129,7 +129,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }
 
@@ -238,7 +238,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       return null;
       }
@@ -255,7 +255,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }
 
@@ -281,7 +281,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }
 
@@ -333,7 +333,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }
 
@@ -418,7 +418,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       databaseIsRefreshing = false;
       }
@@ -444,7 +444,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }
 
@@ -484,13 +484,29 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }
 
     private void MenuItem_LoadSettings_Click(object sender, System.Windows.RoutedEventArgs e)
       {
       LoadSettings(false);
+      }
+
+    private void MenuItem_EditInputConfig_Click(object sender, System.Windows.RoutedEventArgs e)
+      {
+      try
+        {
+        var testCase = GetTestCaseFromRow((dataGrid.SelectedItem as DataRowView).Row);
+        if (testCase == null)
+          return;
+
+        dte.ItemOperations.OpenFile(testCase.caseFolder + @"\input.config");
+        }
+      catch (Exception ex)
+        {        
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        }
       }
     }
   }

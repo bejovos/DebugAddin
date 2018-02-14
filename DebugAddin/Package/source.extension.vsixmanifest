@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="DebugAddin.56520605-d9e0-4e3b-8f99-3c0c3d82a761" Version="1.16.4" Language="en-US" Publisher="Alexander Rezunov" />
+        <Identity Id="DebugAddin.56520605-d9e0-4e3b-8f99-3c0c3d82a761" Version="1.16.5" Language="en-US" Publisher="Alexander Rezunov" />
         <DisplayName>DebugAddin</DisplayName>
         <Description xml:space="preserve">Debug addin.</Description>
     </Metadata>

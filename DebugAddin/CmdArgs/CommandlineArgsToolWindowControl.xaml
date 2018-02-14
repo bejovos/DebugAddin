@@ -25,6 +25,7 @@
         <MenuItem Header="Recreate DataBase" Name="MenuItem_RecreateDataBase" Click="MenuItem_RecreateDataBase_Click"/>
         <MenuItem Header="Generate ParamsFile" Name="MenuItem_GenerateParamsFile" Click="MenuItem_GenerateParamsFile_Click"/>
         <MenuItem Header="Load Settings" Name="MenuItem_LoadSettings" Click="MenuItem_LoadSettings_Click" />
+        <MenuItem Header="Edit input.config" Name="MenuItem_EditInputConfig" Click="MenuItem_EditInputConfig_Click" />
       </ContextMenu>
     </DataGrid.ContextMenu>
     <DataGrid.Columns>
