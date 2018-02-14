@@ -20,6 +20,9 @@ namespace DebugAddin.CmdArgs
         testCase.binaryName = binaryName;
         testCase.sourceFile = sourceFile;
         testCases.Add(caseName, testCase);
+
+        if (operatorToSourceFile.ContainsKey(operatorName) == false)
+          operatorToSourceFile.Add(operatorName, sourceFile);
         }
       public void FillSourceFileInfo(
         Dictionary<Tuple<string, string>, string> operatorNameBinaryNameToSourceFile)
@@ -69,7 +72,15 @@ namespace DebugAddin.CmdArgs
         return testCases[caseName];
         }
 
-      Dictionary<string, TestCase> testCases = new Dictionary<string, TestCase>();
+      public string FindSourceFileByOperatorName(string operatorName)
+        {
+        if (operatorToSourceFile.ContainsKey(operatorName) == false)
+          return null;
+        return operatorToSourceFile[operatorName];
+        }
+
+      Dictionary<string, TestCase> testCases = new Dictionary<string, TestCase>(); // key - caseName
+      Dictionary<string, string> operatorToSourceFile = new Dictionary<string, string>();
 
       public class TestCase
         {
@@ -87,9 +98,25 @@ namespace DebugAddin.CmdArgs
       return input.Substring(1, input.Length - 2);
       }
 
+    private int FindOperateLineNumber(string[] lines)
+      {
+      Regex regex = new Regex(@"::Operate\(\)", RegexOptions.None);
+      int operateLineNumber = 0;
+      for (int lineNumber = 0; lineNumber < lines.Length; ++lineNumber)
+        {
+        for (Match match = regex.Match(lines[lineNumber]); match.Success; match = match.NextMatch())
+          {
+          operateLineNumber = lineNumber;
+          break;
+          }
+        }
+      return operateLineNumber;
+      }
+
     private void ProcessTestableFile(string binaryName, string sourceFile)
       {
       string[] lines = File.ReadAllLines(sourceFile);
+      int operateLineNumber = FindOperateLineNumber(lines);
       Regex regex = new Regex(@"\""[^\""]*\""", RegexOptions.None);
       var operatorNameBinaryNameToSourceFile = new Dictionary<Tuple<string, string>, string>();
       for (int lineNumber = 0; lineNumber < lines.Length; ++lineNumber)
@@ -99,7 +126,8 @@ namespace DebugAddin.CmdArgs
           string maybeOperatorName = RemoveQuotes(match.Value);
           var tuple = new Tuple<string, string>(maybeOperatorName, binaryName);
           if (operatorNameBinaryNameToSourceFile.ContainsKey(tuple) == false)
-            operatorNameBinaryNameToSourceFile.Add(tuple, sourceFile + ":" + (lineNumber + 1));
+            operatorNameBinaryNameToSourceFile.Add(tuple, sourceFile + ":" + 
+              ((operateLineNumber == 0 ? lineNumber : operateLineNumber) + 1));
           }
         }
       db.FillSourceFileInfo(operatorNameBinaryNameToSourceFile);

@@ -112,6 +112,13 @@ namespace DebugAddin.CmdArgs
       public DataBaseRefresher.DataBase.TestCase testCase;
       };
 
+    private void ParseFileNameWithLineNumber(string fileNameWithLineIndex, out string fileName, out int lineNumber)
+      {
+      var matches = new Regex(@"(?<fileName>.*):(?<lineNumber>\d*)$").Match(fileNameWithLineIndex);
+      fileName = matches.Groups["fileName"].Value;
+      lineNumber = int.Parse(matches.Groups["lineNumber"].Value);
+      }
+
     private ParsedRow ParseRow(DataRow row)
       {
       if (row == null)
@@ -125,31 +132,12 @@ namespace DebugAddin.CmdArgs
       DataBaseRefresher.DataBase.TestCase testCase = dataBase?.FindCaseByName(arguments[0]);
       string fileName = testCase?.sourceFile;
       Project project = null;
-      int lineNumber;      
-      if (fileName == null)
-        {
-        fileName = row["Filename"] as string;
-        var matches = new Regex(@"(?<fileName>.*):(?<lineNumber>\d*)$").Match(fileName);
-        fileName = matches.Groups["fileName"].Value;
-        lineNumber = int.Parse(matches.Groups["lineNumber"].Value);
-        
-        foreach (Project p in Utils.GetAllProjectsInSolution())
-          if (p.Name == arguments[0])
-            project = p;
-        // Example: -suite M3DTriangleTree
-        if (project == null)
-          project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
-        // Example: MatSDK.Math.DataQueries.Tests -suite M3DTriangleTree
-        else
-          commandArguments = string.Join(" ", arguments.Skip(1));
-        command = "$(TargetPath)";
-        }
+      int lineNumber;
+      
       // Example: M3DTriangleTree_collision_0 --numthreads 1
-      else
+      if (fileName != null)
         {
-        var matches = new Regex(@"(?<fileName>.*):(?<lineNumber>\d*)$").Match(fileName);
-        fileName = matches.Groups["fileName"].Value;
-        lineNumber = int.Parse(matches.Groups["lineNumber"].Value);
+        ParseFileNameWithLineNumber(fileName, out fileName, out lineNumber);
         project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
 
         string utils = rootFolder + @"\MatSDK\AlgoTester\Utils\";
@@ -164,6 +152,33 @@ namespace DebugAddin.CmdArgs
           string.Join(" ", arguments.Skip(1));
 
         command = utils + @"TKCaseLauncher64.exe";
+        }
+      else
+        {
+        fileName = dataBase?.FindSourceFileByOperatorName(arguments[0]);
+        // Example: M3DTriangleTree_CollisionDetection
+        if (fileName != null)
+          {
+          ParseFileNameWithLineNumber(fileName, out fileName, out lineNumber);
+          project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
+          commandArguments = string.Join(" ", arguments.Skip(1));
+          command = "$(TargetPath)";
+          }
+        else
+          {
+          ParseFileNameWithLineNumber(row["Filename"] as string, out fileName, out lineNumber);
+        
+          foreach (Project p in Utils.GetAllProjectsInSolution())
+            if (p.Name == arguments[0])
+              project = p;
+          // Example: -suite M3DTriangleTree
+          if (project == null)
+            project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
+          // Example: MatSDK.Math.DataQueries.Tests -suite M3DTriangleTree
+          else
+            commandArguments = string.Join(" ", arguments.Skip(1));
+          command = "$(TargetPath)";
+          }
         }
 
       return new ParsedRow
