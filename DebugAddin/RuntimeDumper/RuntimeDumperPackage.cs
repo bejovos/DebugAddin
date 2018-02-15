@@ -138,7 +138,8 @@ namespace DebugAddin
         if (propertyInfo[0].bstrFullName != propertyInfo[0].bstrName)
           variableName = new Regex(@"^[^$.-]*").Match(propertyInfo[0].bstrFullName).Value 
             + "..." + variableName;
-        variableName = variableName.Replace("\"", " ").Replace("'"," ").Replace("\\"," ").Replace("/"," ");
+        variableName = variableName.Replace("\"", " ").Replace("'"," ").Replace("\\"," ").Replace("/"," ")
+          .Replace(" ", "_");
 
         expression = (isPointer ? "" : "&") + propertyInfo[0].bstrFullName;
         Utils.PrintMessage("Dumper", "Constructed expression: " + expression);
