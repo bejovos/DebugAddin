@@ -55,6 +55,8 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="BuildStartupProject\BuildStartupProjectCommand.cs" />
+    <Compile Include="BuildStartupProject\BuildStartupProjectCommandPackage.cs" />
     <Compile Include="CmdArgs\CommandlineArgsToolWindow.cs" />
     <Compile Include="CmdArgs\CommandlineArgsToolWindowCommand.cs" />
     <Compile Include="CmdArgs\CommandlineArgsToolWindowControl.xaml.cs">
@@ -79,6 +81,11 @@
     </None>
   </ItemGroup>
   <ItemGroup>
+    <VSCTCompile Include="BuildStartupProject\BuildStartupProjectCommandPackage.vsct">
+      <ResourceName>Menus2.ctmenu</ResourceName>
+    </VSCTCompile>
+    <Content Include="BuildStartupProject\Resources\BuildStartupProjectCommand.png" />
+    <Content Include="BuildStartupProject\Resources\BuildStartupProjectCommandPackage.ico" />
     <Content Include="ViewHistoryCommand\Resources\ViewHistoryCommand.png" />
     <Content Include="ViewHistoryCommand\Resources\ViewHistoryCommandPackage.ico" />
     <VSCTCompile Include="ViewHistoryCommand\ViewHistoryCommandPackage.vsct">

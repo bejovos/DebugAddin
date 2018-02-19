@@ -423,31 +423,6 @@ namespace DebugAddin.CmdArgs
       databaseIsRefreshing = false;
       }
 
-    private void MenuItem_Build_Click(object sender, System.Windows.RoutedEventArgs e)
-      {
-      try
-        {
-        Project project = GetProjectFromRow((dataGrid.SelectedItem as DataRowView).Row);
-        UIHierarchyItem item = Utils.FindUIHierarchyItem(project);
-        item.Select(vsUISelectionType.vsUISelectionTypeSelect);
-        dte.ToolWindows.SolutionExplorer.Parent.Activate();
-        dte.ExecuteCommand("Build.BuildSelection");
-
-        foreach (EnvDTE.Window window in dte.Windows)
-          {
-          if (window.Caption.StartsWith("Pending Changes"))
-            {
-            window.Activate();
-            break;
-            }
-          }
-        }
-      catch (Exception ex)
-        {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
-        }
-      }
-
     private void CreateParamsFile(DataBaseRefresher.DataBase.TestCase testCase)
       {
       if (testCase != null)
@@ -473,18 +448,6 @@ namespace DebugAddin.CmdArgs
         pProcess.StartInfo.CreateNoWindow = true;
         pProcess.Start();
         pProcess.WaitForExit();
-        }
-      }
-
-    private void MenuItem_GenerateParamsFile_Click(object sender, System.Windows.RoutedEventArgs e)
-      {
-      try
-        {
-        CreateParamsFile(GetTestCaseFromRow((dataGrid.SelectedItem as DataRowView).Row));
-        }
-      catch (Exception ex)
-        {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }
 
