@@ -69,6 +69,17 @@ namespace DebugAddin.CmdArgs
             dataTable.Rows.Add(array[0], array[1]);
           }
         }
+      
+      if (rootFolder == "")
+        {
+        using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
+          {
+          dialog.Description = "Specify path to branch root (example ...\\BranchMain\\)";
+          dialog.ShowDialog();
+          rootFolder = dialog.SelectedPath;
+          }
+        }
+
       return dataTable;
       }
 
@@ -157,9 +168,14 @@ namespace DebugAddin.CmdArgs
 
       string command;
       string commandArguments = row["CommandArguments"] as string;
+      
+      if (commandArguments == null)
+        return null;
+
       string[] arguments = commandArguments.Split(' ');
       if (arguments.Length == 0)
         return null;
+
       DataBaseRefresher.DataBase.TestCase testCase = dataBase?.FindCaseByName(arguments[0]);
       string fileName = testCase?.sourceFile;
       Project project = null;
@@ -170,6 +186,11 @@ namespace DebugAddin.CmdArgs
         {
         ParseFileNameWithLineNumber(fileName, out fileName, out lineNumber);
         project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
+
+        if (project == null)
+          {
+          System.Windows.Forms.MessageBox.Show("Testable project is not found:\n" + fileName);
+          }
 
         string utils = rootFolder + @"\MatSDK\AlgoTester\Utils\";
         string intermediate = rootFolder + @"\MatSDK\AlgoTester\Intermediate\";
@@ -266,6 +287,9 @@ namespace DebugAddin.CmdArgs
       try
         {
         var parsedRow = ParseRow(row);
+
+        if (parsedRow == null || parsedRow.project == null)
+          return;
 
         dynamic vcPrj = (dynamic)parsedRow.project.Object; // is VCProject
         dynamic vcCfg = vcPrj.ActiveConfiguration; // is VCConfiguration
@@ -426,8 +450,9 @@ namespace DebugAddin.CmdArgs
     private void CreateParamsFile(DataBaseRefresher.DataBase.TestCase testCase)
       {
       if (testCase != null)
-        {
+        {        
         string paramsFile = rootFolder + @"\MatSDK\AlgoTester\Intermediate\AlgoTesterParams.input";
+        Directory.CreateDirectory(Path.GetDirectoryName(paramsFile));
         var file = new StreamWriter(paramsFile);
         file.WriteLine("--cases_root");
         file.WriteLine(testCase.caseFolder);
@@ -468,6 +493,19 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {        
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        }
+      }
+
+    private void DataGrid_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
+      {
+      try
+        {
+        ((DataRowView)e.Row.Item).Row["CommandArguments"] = 
+          dte.Solution.FindProjectItem(dte.ActiveDocument.FullName)?.ContainingProject?.Name;
+        }
+      catch (Exception ex)
+        {
         Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }

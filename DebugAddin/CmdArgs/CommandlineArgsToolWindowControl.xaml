@@ -18,6 +18,7 @@
     AutoGenerateColumns="False"
     PreviewKeyDown="DataGrid_PreviewKeyDown"
     RowEditEnding="DataGrid_RowEditEnding"
+    BeginningEdit="DataGrid_BeginningEdit"
     >
     <DataGrid.ContextMenu>
       <ContextMenu>
