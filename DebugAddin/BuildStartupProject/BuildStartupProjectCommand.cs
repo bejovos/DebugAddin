@@ -86,6 +86,8 @@ namespace DebugAddin.BuildStartupProject
             break;
             }
           }
+
+        dte.ActiveDocument.Activate();
         }
       catch (Exception ex)
         {
