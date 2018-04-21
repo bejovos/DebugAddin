@@ -181,6 +181,43 @@ namespace DebugAddin.CmdArgs
       lineNumber = int.Parse(matches.Groups["lineNumber"].Value);
       }
 
+    private string GetCaseNameFromCommandLine(ref string commandLine)
+      {
+      bool escaped = false;
+      string result = "";
+      int i=0;
+      for (; i<commandLine.Length; ++i)
+        {
+        if (escaped)
+          {          
+          if (commandLine[i] == '"')
+            escaped = false;
+          else
+            result += commandLine[i];
+          }
+        else
+          {
+          if (commandLine[i] == ' ')
+            {
+            if (result != "")
+              break;
+            continue;
+            }          
+          if (commandLine[i] == '"')
+            escaped = true;
+          else 
+            result += commandLine[i];
+          }
+        }
+
+      if (i == commandLine.Length)
+        commandLine = "";
+      else 
+        commandLine = commandLine.Substring(i);
+
+      return result;
+      }
+
     private ParsedRow ParseRow(DataRow row)
       {
       if (row == null)
@@ -192,11 +229,10 @@ namespace DebugAddin.CmdArgs
       if (commandArguments == null)
         return null;
 
-      string[] arguments = commandArguments.Split(' ');
-      if (arguments.Length == 0)
-        return null;
+      string restArguments = commandArguments;
+      string caseName = GetCaseNameFromCommandLine(ref restArguments);
 
-      DataBaseRefresher.DataBase.TestCase testCase = dataBase?.FindCaseByName(arguments[0]);
+      DataBaseRefresher.DataBase.TestCase testCase = dataBase?.FindCaseByName(caseName);
       string fileName = testCase?.sourceFile;
       Project project = null;
       int lineNumber;
@@ -214,14 +250,13 @@ namespace DebugAddin.CmdArgs
 
         string utils = testSystemRoot + @"\Utils\";
         string intermediate = testSystemRoot + @"\Intermediate\";
-        string caseName = arguments[0];
 
         caseName = new Regex(@"[ (){}\[\]+]").Replace(caseName, "_");
 
         commandArguments = @"--binary ""$(TargetPath)"" --input """ +
           intermediate + caseName + @"_statistics.params"" --statistic """ +
           intermediate + caseName + @"_statistics.stats"" " +
-          string.Join(" ", arguments.Skip(1));
+          string.Join(" ", restArguments);
 
         command = utils + @"TKCaseLauncher64.exe";
         }
