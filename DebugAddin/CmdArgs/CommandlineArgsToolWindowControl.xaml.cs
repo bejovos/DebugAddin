@@ -4,6 +4,7 @@ using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.Shell;
 using Microsoft.VisualStudio.Shell.Interop;
 using System;
+using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Linq;
@@ -17,32 +18,15 @@ namespace DebugAddin.CmdArgs
     {
     DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
 
-    string rootFolder = "";
+    List<string> roots = new List<string>{ }; // paths to MatSDK and/or MDCK
+    string testSystemRoot = null;
     DataBaseRefresher.DataBase dataBase = null;
 
-    static private DataBaseRefresher.DataBase LoadDataBase(string rootFolder)
-      {
-      try
-        {
-        if (rootFolder == null || File.Exists(rootFolder + @"\AlgotesterCmd2.tmp") == false)
-          return null;
-        DataBaseRefresher.DataBase dataBase = new DataBaseRefresher.DataBase();
-        dataBase.LoadFromFile(rootFolder + @"\AlgotesterCmd2.tmp");
-        return dataBase;
-        }
-      catch (Exception ex)
-        {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
-        }
-      return null;
-      }
-
-    static private void SaveCmdArgs(DataTable dataTable, string rootFolder)
+    static private void SaveCmdArgs(DataTable dataTable)
       {
       DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
-      var file = new StreamWriter(dte.Solution.FullName + @".cmdargs");
-      file.WriteLine("Version 1.1");
-      file.WriteLine(rootFolder);
+      var file = new StreamWriter(dte.Solution.FullName + @".debugaddin.cmdargs");
+      file.WriteLine("Version 1.2");
       foreach (DataRow row in dataTable.Rows)
         {
         file.WriteLine(row["CommandArguments"]);
@@ -51,54 +35,90 @@ namespace DebugAddin.CmdArgs
       file.Close();
       }
 
-    static private DataTable LoadCmdArgs(out string rootFolder)
+    private void SaveRoots()
       {
-      rootFolder = "";
-      DataTable dataTable = new DataTable();
-      dataTable.Columns.Add("CommandArguments");
-      dataTable.Columns.Add("Filename");
-      DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
-      string file = dte.Solution.FullName + @".cmdargs";
-      if (File.Exists(file))
+      var file = new StreamWriter(dte.Solution.FullName + @".debugaddin.roots");
+      file.WriteLine("Version 1.2");
+      foreach (string root in roots)
         {
-        string[] lines = File.ReadAllLines(file);
-        if (lines.Length > 0 && lines[0] == "Version 1.1")
-          {
-          rootFolder = lines[1];
-          foreach (var array in Utils.TupleUp(lines.Skip(2), 2))
-            dataTable.Rows.Add(array[0], array[1]);
-          }
+        file.WriteLine(root);
         }
-      
-      if (rootFolder == "")
-        {
-        using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
-          {
-          dialog.Description = "Specify path to branch root (example ...\\BranchMain\\)";
-          dialog.ShowDialog();
-          rootFolder = dialog.SelectedPath;
-          }
-        }
-
-      return dataTable;
+      file.Close();
       }
 
-    private void LoadSettings(bool quiet)
+    private void LoadRoots()
       {
       try
         {
-        DataTable dataTable = LoadCmdArgs(out rootFolder);
-        dataTable.RowChanged += (x, y) => SaveCmdArgs(dataTable, rootFolder);
-        dataTable.RowDeleted += (x, y) => SaveCmdArgs(dataTable, rootFolder);
-        dataGrid.ItemsSource = dataTable.DefaultView;
-        dataBase = LoadDataBase(rootFolder);
-        if (quiet == false)
-          System.Windows.Forms.MessageBox.Show("Loaded!");
+        if (File.Exists(dte.Solution.FullName + @".debugaddin.roots"))
+          {
+          string[] lines = File.ReadAllLines(dte.Solution.FullName + @".debugaddin.roots");
+          if (lines.Length > 0 && lines[0] == "Version 1.2")
+            {
+            roots = lines.Skip(1).ToList();
+            }
+          }
         }
       catch (Exception ex)
         {
         Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
+
+      testSystemRoot = null;
+      foreach (string root in roots)
+        if (Directory.Exists(root + @"\AlgoTester\Utils\"))
+          testSystemRoot = root + @"\AlgoTester\";
+      }
+
+    private void LoadSettings(bool quiet)
+      {
+      // CmdArgs
+
+      DataTable dataTable = new DataTable();
+      dataTable.Columns.Add("CommandArguments");
+      dataTable.Columns.Add("Filename");
+      DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
+
+      try
+        {
+        if (File.Exists(dte.Solution.FullName + @".debugaddin.cmdargs"))
+          {
+          string[] lines = File.ReadAllLines(dte.Solution.FullName + @".debugaddin.cmdargs");
+          if (lines.Length > 0 && lines[0] == "Version 1.2")
+            {
+            foreach (var array in Utils.TupleUp(lines.Skip(1), 2))
+              dataTable.Rows.Add(array[0], array[1]);
+            }
+          }
+        }
+      catch (Exception ex)
+        {
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        }
+
+      dataTable.RowChanged += (x, y) => SaveCmdArgs(dataTable);
+      dataTable.RowDeleted += (x, y) => SaveCmdArgs(dataTable);
+      dataGrid.ItemsSource = dataTable.DefaultView;
+
+      // Roots
+
+      LoadRoots();
+
+      // Cases
+
+      try
+        {
+        dataBase = new DataBaseRefresher.DataBase();
+        if (File.Exists(dte.Solution.FullName + @".debugaddin.algotests"))
+          dataBase.LoadFromFile(dte.Solution.FullName + @".debugaddin.algotests");
+        }
+      catch (Exception ex)
+        {
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        }
+
+      if (quiet == false)
+        System.Windows.Forms.MessageBox.Show("Loaded!");
       }
 
     BuildEvents buildEvents;
@@ -192,8 +212,8 @@ namespace DebugAddin.CmdArgs
           System.Windows.Forms.MessageBox.Show("Testable project is not found:\n" + fileName);
           }
 
-        string utils = rootFolder + @"\MatSDK\AlgoTester\Utils\";
-        string intermediate = rootFolder + @"\MatSDK\AlgoTester\Intermediate\";
+        string utils = testSystemRoot + @"\Utils\";
+        string intermediate = testSystemRoot + @"\Intermediate\";
         string caseName = arguments[0];
 
         caseName = new Regex(@"[ (){}\[\]+]").Replace(caseName, "_");
@@ -207,30 +227,10 @@ namespace DebugAddin.CmdArgs
         }
       else
         {
-        fileName = dataBase?.FindSourceFileByOperatorName(arguments[0]);
-        // Example: M3DTriangleTree_CollisionDetection
-        if (fileName != null)
-          {
-          ParseFileNameWithLineNumber(fileName, out fileName, out lineNumber);
-          project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
-          commandArguments = string.Join(" ", arguments.Skip(1));
-          command = "$(TargetPath)";
-          }
-        else
-          {
-          ParseFileNameWithLineNumber(row["Filename"] as string, out fileName, out lineNumber);
-        
-          foreach (Project p in Utils.GetAllProjectsInSolution())
-            if (p.Name == arguments[0])
-              project = p;
-          // Example: -suite M3DTriangleTree
-          if (project == null)
-            project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
-          // Example: MatSDK.Math.DataQueries.Tests -suite M3DTriangleTree
-          else
-            commandArguments = string.Join(" ", arguments.Skip(1));
-          command = "$(TargetPath)";
-          }
+        ParseFileNameWithLineNumber(row["Filename"] as string, out fileName, out lineNumber);
+        // Example: -suite M3DTriangleTree
+        project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
+        command = "$(TargetPath)";
         }
 
       return new ParsedRow
@@ -370,7 +370,8 @@ namespace DebugAddin.CmdArgs
 
     int IVsSolutionEvents.OnAfterCloseSolution(object pUnkReserved)
       {
-      rootFolder = "";
+      testSystemRoot = null;
+      roots.Clear();
       dataBase = null;
       dataGrid.ItemsSource = null;
       return VSConstants.S_OK;
@@ -436,7 +437,7 @@ namespace DebugAddin.CmdArgs
       databaseIsRefreshing = true;
       try
         {
-        await System.Threading.Tasks.Task.Run(() => new DataBaseRefresher().RefreshDataBase(rootFolder));
+        await System.Threading.Tasks.Task.Run(() => new DataBaseRefresher().RefreshDataBase(roots, dte.Solution.FullName + @".debugaddin.algotests") );
         System.Windows.Forms.MessageBox.Show("Recreated!");
         LoadSettings(false);
         }
@@ -451,22 +452,22 @@ namespace DebugAddin.CmdArgs
       {
       if (testCase != null)
         {        
-        string paramsFile = rootFolder + @"\MatSDK\AlgoTester\Intermediate\AlgoTesterParams.input";
+        string paramsFile = testSystemRoot + @"\Intermediate\AlgoTesterParams.input";
         Directory.CreateDirectory(Path.GetDirectoryName(paramsFile));
         var file = new StreamWriter(paramsFile);
         file.WriteLine("--cases_root");
         file.WriteLine(testCase.caseFolder);
         file.WriteLine("--settings");
-        file.WriteLine(rootFolder + @"\MatSDK\AlgoTester\settings.config");
+        file.WriteLine(testSystemRoot + @"\settings.config");
         file.WriteLine("--bins_root");
-        file.WriteLine(rootFolder);
+        file.WriteLine(testSystemRoot);
         file.WriteLine("--restrictions");
         file.WriteLine("");
         file.WriteLine("--case");
         file.WriteLine(testCase.caseName);
         file.Close();
         System.Diagnostics.Process pProcess = new System.Diagnostics.Process();
-        pProcess.StartInfo.FileName = rootFolder + @"\MatSDK\AlgoTester\Utils\AlgoTester.exe";
+        pProcess.StartInfo.FileName = testSystemRoot + @"\Utils\AlgoTester.exe";
         pProcess.StartInfo.Arguments = "--paramsfile \"" + paramsFile + "\"";
         pProcess.StartInfo.UseShellExecute = false;
         pProcess.StartInfo.WindowStyle = System.Diagnostics.ProcessWindowStyle.Hidden;
@@ -501,11 +502,34 @@ namespace DebugAddin.CmdArgs
       {
       try
         {
-        ((DataRowView)e.Row.Item).Row["CommandArguments"] = 
-          dte.Solution.FindProjectItem(dte.ActiveDocument.FullName)?.ContainingProject?.Name;
+        DataRowView row = (DataRowView)e.Row.Item;
+        if (!(row.Row["CommandArguments"] is string && (string)row.Row["CommandArguments"] != ""))
+          row.Row["CommandArguments"] = dte.Solution.FindProjectItem(dte.ActiveDocument.FullName)?.ContainingProject?.Name;
         }
       catch (Exception ex)
         {
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        }
+      }
+
+    private void MenuItem_AddNewTestRoot_Click(object sender, System.Windows.RoutedEventArgs e)
+      {
+      try
+        {
+        using (var dialog = new System.Windows.Forms.FolderBrowserDialog())
+          {
+          dialog.Description = "Specify path to AlgoTester root (example ...\\MatSDK\\AlgoTester\\)";
+          var result = dialog.ShowDialog();
+          if (result == System.Windows.Forms.DialogResult.OK || result == System.Windows.Forms.DialogResult.Yes)
+            {
+            roots.Add(Directory.GetParent(dialog.SelectedPath).FullName);
+            SaveRoots();
+            LoadRoots();
+            }
+          }      
+        }
+      catch (Exception ex)
+        {        
         Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
         }
       }

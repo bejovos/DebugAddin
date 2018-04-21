@@ -45,7 +45,7 @@ namespace DebugAddin.CmdArgs
       public void WriteToFile(string fileName)
         {
         var file = new StreamWriter(fileName);
-        file.WriteLine("Version 1.1");
+        file.WriteLine("Version 1.2");
         foreach (var testCase in testCases)
           {
           file.WriteLine(testCase.Value.caseName);
@@ -59,7 +59,7 @@ namespace DebugAddin.CmdArgs
       public void LoadFromFile(string fileName)
         {
         string[] lines = File.ReadAllLines(fileName);
-        if (lines.Length > 0 && lines[0] == "Version 1.1")
+        if (lines.Length > 0 && lines[0] == "Version 1.2")
           {
           foreach (var array in Utils.TupleUp(lines.Skip(1), 5))
             Add(array[0], array[1], array[2], array[3], array[4]);
@@ -91,7 +91,6 @@ namespace DebugAddin.CmdArgs
         public string sourceFile; // full path with ":lineNumber"
         };
       };
-    private DataBase db = new DataBase();
 
     private string RemoveQuotes(string input)
       {
@@ -178,19 +177,18 @@ namespace DebugAddin.CmdArgs
         }
       }
 
-    static Guid exceptionPaneGuid = new Guid("51508B70-BD07-4BD7-86A6-442E34D3964C");
+    private DataBase db = new DataBase();
 
-    // @"d:\TFS\MatSDK\BranchMain";
-    public void RefreshDataBase(string matsdkRoot)
+    public void RefreshDataBase(List<string> roots, string outputFile)
       {
-      string[] testCases = Directory.GetFiles(matsdkRoot + @"\MatSDK\AlgoTester\Cases\", "case.config", SearchOption.AllDirectories);
-      foreach (string testCase in testCases)
-        ProcessTestCase(testCase);
-
-      string[] directories =
-        Directory.GetDirectories(matsdkRoot + @"\MatSDK\Libraries\", "testable", SearchOption.AllDirectories);
-      directories.Concat(
-        Directory.GetDirectories(matsdkRoot + @"\MDCK\Libraries\", "testable", SearchOption.AllDirectories));
+      List<string> directories = new List<string>{ };
+      foreach (string root in roots)
+        {
+        string[] testCases = Directory.GetFiles(root + @"\AlgoTester\Cases\", "case.config", SearchOption.AllDirectories);
+        foreach (string testCase in testCases)
+          ProcessTestCase(testCase);
+        directories.AddRange(Directory.GetDirectories(root + @"\Libraries\", "testable", SearchOption.AllDirectories));
+        }
 
       foreach (string directory in directories)
         {
@@ -198,8 +196,7 @@ namespace DebugAddin.CmdArgs
         foreach (string sourceFile in Directory.GetFiles(directory + @"\", @"*", SearchOption.AllDirectories))
           ProcessTestableFile(binary, sourceFile);
         }
-
-      db.WriteToFile(matsdkRoot + @"\AlgotesterCmd2.tmp");
+      db.WriteToFile(outputFile);
       }
     }
   }

@@ -25,6 +25,7 @@
         <MenuItem Header="Recreate DataBase" Name="MenuItem_RecreateDataBase" Click="MenuItem_RecreateDataBase_Click"/>
         <MenuItem Header="Load Settings" Name="MenuItem_LoadSettings" Click="MenuItem_LoadSettings_Click" />
         <MenuItem Header="Edit input.config" Name="MenuItem_EditInputConfig" Click="MenuItem_EditInputConfig_Click" />
+        <MenuItem Header="Add new test root" Name="MenuItem_AddNewTestRoot" Click="MenuItem_AddNewTestRoot_Click" />
       </ContextMenu>
     </DataGrid.ContextMenu>
     <DataGrid.Columns>
