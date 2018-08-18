@@ -1,7 +1,7 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <PackageManifest Version="2.0.0" xmlns="http://schemas.microsoft.com/developer/vsx-schema/2011" xmlns:d="http://schemas.microsoft.com/developer/vsx-schema-design/2011">
     <Metadata>
-        <Identity Id="DebugAddin.56520605-d9e0-4e3b-8f99-3c0c3d82a761" Version="1.16.11" Language="en-US" Publisher="Alexander Rezunov" />
+        <Identity Id="DebugAddin.56520605-d9e0-4e3b-8f99-3c0c3d82a761" Version="1.17.1" Language="en-US" Publisher="Alexander Rezunov" />
         <DisplayName>DebugAddin</DisplayName>
         <Description xml:space="preserve">Debug addin.</Description>
     </Metadata>
@@ -17,5 +17,6 @@
     </Prerequisites>
     <Assets>
         <Asset Type="Microsoft.VisualStudio.VsPackage" d:Source="Project" d:ProjectName="%CurrentProject%" Path="|%CurrentProject%;PkgdefProjectOutputGroup|" />
+        <Asset d:Source="Project" d:ProjectName="LibInf" Type="Microsoft.VisualStudio.Assembly" Path="|LibInf|" AssemblyName="|LibInf;AssemblyName|" />
     </Assets>
 </PackageManifest>

@@ -76,16 +76,36 @@ namespace DebugAddin
         string expression;
         if (processId != dte.Debugger.CurrentProcess.ProcessID)
           {
-          ulong address = 0;
-          var process = (EnvDTE90.Process3)dte.Debugger.CurrentProcess;
-          foreach (EnvDTE90.Module module in process.Modules)
-            if (module.Name.ToLower() == "kernel32.dll")
-              {
-              address = module.LoadAddress + 0x1DDD0; // sorry:)
-              break;
-              }
+          if (true)
+            {            
+            System.Diagnostics.Process process = new System.Diagnostics.Process();
+            process.StartInfo.FileName = 
+              Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location)
+              + @"\LibInf64.exe";
+            process.StartInfo.Arguments = "kernel32.dll LoadLibraryW";
+            Utils.PrintMessage("Dumper", "Executing: " + 
+              process.StartInfo.FileName + " " + process.StartInfo.Arguments);
+            process.StartInfo.UseShellExecute = false;
+            process.StartInfo.RedirectStandardOutput = true;
+            process.StartInfo.WindowStyle = ProcessWindowStyle.Hidden;
+            process.Start();    
+            expression = process.StandardOutput.ReadToEnd();
+            Utils.PrintMessage("Dumper", "Execution result: " + expression);
+            process.WaitForExit();
+            }
 
-          expression = "((void*(*)(wchar_t*))"+address+")(L\"Dumper.dll\")";
+          if (true)
+            {
+            var process = (EnvDTE90.Process3)dte.Debugger.CurrentProcess;
+            foreach (EnvDTE90.Module module in process.Modules)
+              if (module.Name.ToLower() == "kernel32.dll")
+                {
+                expression = expression + "+" + module.LoadAddress;
+                break;
+                }
+            }
+
+          expression = "((void*(*)(wchar_t*))(" + expression + "))(L\"Dumper.dll\")";
           Utils.PrintMessage("Dumper", "Constructed expression: " + expression);
           expression = dte.Debugger.GetExpression(expression).Value;
           Utils.PrintMessage("Dumper", expression);
@@ -126,7 +146,7 @@ namespace DebugAddin
 
           global_expression = "";
           global_expression_counter = 0;
-          processId = process.ProcessID;
+          processId = ((EnvDTE90.Process3)dte.Debugger.CurrentProcess).ProcessID;
           }
 
         int index = propertyInfo[0].bstrType.IndexOf(" {");
@@ -167,7 +187,7 @@ namespace DebugAddin
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Dumper", ex.Message);
+        Utils.PrintMessage("Dumper", ex.Message + "\n" + ex.StackTrace);
         }
       return 0;
       }
