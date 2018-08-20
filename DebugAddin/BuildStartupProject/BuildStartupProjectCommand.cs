@@ -18,18 +18,13 @@ namespace DebugAddin.BuildStartupProject
 
     private BuildStartupProjectCommand(Package package)
       {
-      if (package == null)
-        {
-        throw new ArgumentNullException("package");
-        }
+      this.package = package ?? throw new ArgumentNullException("package");
 
-      this.package = package;
-
-      OleMenuCommandService commandService = this.ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
+      OleMenuCommandService commandService = ServiceProvider.GetService(typeof(IMenuCommandService)) as OleMenuCommandService;
       if (commandService != null)
         {
         var menuCommandID = new CommandID(CommandSet, CommandId);
-        var menuItem = new MenuCommand(this.MenuItemCallback, menuCommandID);
+        var menuItem = new MenuCommand(MenuItemCallback, menuCommandID);
         commandService.AddCommand(menuItem);
         }
       }
@@ -55,6 +50,8 @@ namespace DebugAddin.BuildStartupProject
 
     private void MenuItemCallback(object sender, EventArgs e)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
+
       try
         {
         DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));        
@@ -91,7 +88,7 @@ namespace DebugAddin.BuildStartupProject
         }
       catch (Exception ex)
         {
-        CmdArgs.Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        CmdArgs.Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       }
     }

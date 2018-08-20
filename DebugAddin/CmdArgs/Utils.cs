@@ -32,7 +32,7 @@ namespace DebugAddin.CmdArgs
       }
 
     static private Dictionary<string, Guid> panes = new Dictionary<string, Guid>();
-    static public void PrintMessage(string from, string message)
+    static public void PrintMessage(string from, string message, bool activate = false)
       {
       Guid guid;
       IVsOutputWindow outWindow = Package.GetGlobalService(typeof(SVsOutputWindow)) as IVsOutputWindow;
@@ -45,6 +45,8 @@ namespace DebugAddin.CmdArgs
       IVsOutputWindowPane debugPane;
       outWindow.GetPane(ref guid, out debugPane);
       debugPane.OutputString(message + "\n");
+      if (activate)
+        debugPane.Activate();
       }
 
     static public IList<Project> GetAllProjectsInSolution()

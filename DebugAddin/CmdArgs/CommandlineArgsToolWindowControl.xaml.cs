@@ -18,7 +18,7 @@ namespace DebugAddin.CmdArgs
     {
     DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
 
-    List<string> roots = new List<string>{ }; // paths to MatSDK and/or MDCK
+    List<string> roots = new List<string> { }; // paths to MatSDK and/or MDCK
     string testSystemRoot = null;
     DataBaseRefresher.DataBase dataBase = null;
 
@@ -61,7 +61,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
 
       testSystemRoot = null;
@@ -93,7 +93,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
 
       dataTable.RowChanged += (x, y) => SaveCmdArgs(dataTable);
@@ -114,7 +114,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
 
       if (quiet == false)
@@ -134,7 +134,7 @@ namespace DebugAddin.CmdArgs
 
       buildEvents = dte.Events.BuildEvents;
       buildEvents.OnBuildDone += BuildEvents_OnBuildDone;
-      
+
       var command = dte.Commands.Item("Debug.StartWithoutDebugging");
       commandDebugStartWithoutDebuggingEvents = dte.Events.CommandEvents[command.Guid, command.ID];
       commandDebugStartWithoutDebuggingEvents.BeforeExecute += BeforeDebugStarted;
@@ -160,7 +160,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       }
 
@@ -181,15 +181,15 @@ namespace DebugAddin.CmdArgs
       lineNumber = int.Parse(matches.Groups["lineNumber"].Value);
       }
 
-    private string GetCaseNameFromCommandLine(ref string commandLine)
+    private string GetFirstArgument(ref string commandLine)
       {
       bool escaped = false;
       string result = "";
-      int i=0;
-      for (; i<commandLine.Length; ++i)
+      int i = 0;
+      for (; i < commandLine.Length; ++i)
         {
         if (escaped)
-          {          
+          {
           if (commandLine[i] == '"')
             escaped = false;
           else
@@ -202,17 +202,17 @@ namespace DebugAddin.CmdArgs
             if (result != "")
               break;
             continue;
-            }          
+            }
           if (commandLine[i] == '"')
             escaped = true;
-          else 
+          else
             result += commandLine[i];
           }
         }
 
       if (i == commandLine.Length)
         commandLine = "";
-      else 
+      else
         commandLine = commandLine.Substring(i);
 
       return result;
@@ -225,18 +225,18 @@ namespace DebugAddin.CmdArgs
 
       string command;
       string commandArguments = row["CommandArguments"] as string;
-      
+
       if (commandArguments == null)
         return null;
 
       string restArguments = commandArguments;
-      string caseName = GetCaseNameFromCommandLine(ref restArguments);
+      string firstArgument = GetFirstArgument(ref restArguments);
 
-      DataBaseRefresher.DataBase.TestCase testCase = dataBase?.FindCaseByName(caseName);
+      DataBaseRefresher.DataBase.TestCase testCase = dataBase?.FindCaseByName(firstArgument);
       string fileName = testCase?.sourceFile;
       Project project = null;
       int lineNumber;
-      
+
       // Example: M3DTriangleTree_collision_0 --numthreads 1
       if (fileName != null)
         {
@@ -251,20 +251,27 @@ namespace DebugAddin.CmdArgs
         string utils = testSystemRoot + @"\Utils\";
         string intermediate = testSystemRoot + @"\Intermediate\";
 
-        caseName = new Regex(@"[ (){}\[\]+]").Replace(caseName, "_");
+        firstArgument = new Regex(@"[ (){}\[\]+]").Replace(firstArgument, "_");
 
         commandArguments = @"--binary ""$(TargetPath)"" --input """ +
-          intermediate + caseName + @"_statistics.params"" --statistic """ +
-          intermediate + caseName + @"_statistics.stats"" " +
-          string.Join(" ", restArguments);
+          intermediate + firstArgument + @"_statistics.params"" --statistic """ +
+          intermediate + firstArgument + @"_statistics.stats"" " + restArguments;
 
         command = utils + @"TKCaseLauncher64.exe";
         }
       else
         {
         ParseFileNameWithLineNumber(row["Filename"] as string, out fileName, out lineNumber);
-        // Example: -suite M3DTriangleTree
-        project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
+
+        foreach (Project p in Utils.GetAllProjectsInSolution())
+          if (p.Name == firstArgument)
+            project = p;
+        // Example: -test UserTest
+        if (project == null)
+          project = dte.Solution.FindProjectItem(fileName)?.ContainingProject;
+        // Example: Project.Tests -suite UserTest
+        else
+          commandArguments = restArguments;
         command = "$(TargetPath)";
         }
 
@@ -294,7 +301,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       return null;
       }
@@ -311,7 +318,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       }
 
@@ -340,7 +347,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       }
 
@@ -392,7 +399,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       }
 
@@ -472,13 +479,13 @@ namespace DebugAddin.CmdArgs
       databaseIsRefreshing = true;
       try
         {
-        await System.Threading.Tasks.Task.Run(() => new DataBaseRefresher().RefreshDataBase(roots, dte.Solution.FullName + @".debugaddin.algotests") );
+        await System.Threading.Tasks.Task.Run(() => new DataBaseRefresher().RefreshDataBase(roots, dte.Solution.FullName + @".debugaddin.algotests"));
         System.Windows.Forms.MessageBox.Show("Recreated!");
         LoadSettings(false);
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       databaseIsRefreshing = false;
       }
@@ -486,7 +493,7 @@ namespace DebugAddin.CmdArgs
     private void CreateParamsFile(DataBaseRefresher.DataBase.TestCase testCase)
       {
       if (testCase != null)
-        {        
+        {
         string paramsFile = testSystemRoot + @"\Intermediate\AlgoTesterParams.input";
         Directory.CreateDirectory(Path.GetDirectoryName(paramsFile));
         var file = new StreamWriter(paramsFile);
@@ -528,8 +535,8 @@ namespace DebugAddin.CmdArgs
         dte.ItemOperations.OpenFile(testCase.caseFolder + @"\input.config");
         }
       catch (Exception ex)
-        {        
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        {
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       }
 
@@ -543,7 +550,7 @@ namespace DebugAddin.CmdArgs
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       }
 
@@ -561,11 +568,11 @@ namespace DebugAddin.CmdArgs
             SaveRoots();
             LoadRoots();
             }
-          }      
+          }
         }
       catch (Exception ex)
-        {        
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace);
+        {
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       }
     }

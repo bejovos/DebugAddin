@@ -11,3 +11,7 @@
 /Release
 /LibInf/x64/Release
 /x64/Release
+/LibInf/Debug
+/Debug
+/LibInf/x64/Debug
+/x64/Debug
