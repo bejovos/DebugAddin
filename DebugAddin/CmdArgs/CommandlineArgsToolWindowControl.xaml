@@ -12,7 +12,9 @@
     x:Name="dataGrid" Margin="5,5,5,5" HeadersVisibility="None" 
     SelectionMode="Single" ColumnWidth="*" CanUserReorderColumns="False" 
     CanUserResizeColumns="False" CanUserSortColumns="False" CanUserResizeRows="False"
-    GridLinesVisibility="None" Background="{DynamicResource VsBrush.Window}" BorderThickness="0"
+    GridLinesVisibility="None" BorderThickness="0"
+    Background="{DynamicResource VsBrush.Window}"
+    Foreground="{DynamicResource VsBrush.WindowText}"
     HorizontalScrollBarVisibility="Disabled" VerticalScrollBarVisibility="Auto"
     SelectedCellsChanged="DataGrid_SelectedCellsChanged"    
     AutoGenerateColumns="False"
@@ -42,11 +44,10 @@
         <Style.Triggers>
           <Trigger Property="DataGridCell.IsSelected" Value="False">
             <Setter Property="Background" Value="{DynamicResource VsBrush.Window}" />
+            <Setter Property="Foreground" Value="{DynamicResource VsBrush.WindowText}" />
           </Trigger>
         </Style.Triggers>
       </Style>
-      <SolidColorBrush x:Key="{x:Static SystemColors.InactiveSelectionHighlightBrushKey}" Color="#CCCEDB"/>
-      <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#3399FF"/>
     </DataGrid.Resources>
   </DataGrid>
 </UserControl>

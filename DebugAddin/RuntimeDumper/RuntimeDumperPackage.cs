@@ -142,7 +142,7 @@ namespace DebugAddin
         string expression = ExecuteExpression((isPointer ? "" : "&") + propertyInfo[0].bstrFullName);
         
         string typeName = propertyInfo[0].bstrType + (isPointer ? " *" : "");
-        typeName = "\"" + new Regex(@"[\w.]+!").Replace(typeName, "") + "\"";
+        typeName = "\\\"" + new Regex(@"[\w.]+!").Replace(typeName, "") + "\\\"";
 
         if (Convert.ToUInt64(expression, 16) == 0)
           throw new Exception("Incorrect argument!");
