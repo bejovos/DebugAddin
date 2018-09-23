@@ -22,7 +22,7 @@
 
   <!--The Commands section is where commands, menus, and menu groups are defined.
       This section uses a Guid to identify the package that provides the command defined inside it. -->
-  <Commands package="guidBuildStartupProjectCommandPackage">
+  <Commands package="guidCaretCommandsPackage">
     <!-- Inside this section we have different sub-sections: one for the menus, another
     for the menu groups, one for the buttons (the actual commands), one for the combos
     and the last one for the bitmaps used. Each element is identified by a command id that
@@ -36,7 +36,7 @@
          group as the part of a menu contained between two lines. The parent of a group
          must be a menu. -->
     <Groups>
-      <Group guid="guidBuildStartupProjectCommandPackageCmdSet" id="MyMenuGroup" priority="0x0600">
+      <Group guid="guidCaretCommandsPackageCmdSet" id="MyMenuGroup" priority="0x0600">
         <Parent guid="guidSHLMainMenu" id="IDM_VS_MENU_TOOLS"/>
       </Group>
     </Groups>
@@ -52,10 +52,16 @@
               <CommandFlag>DefaultInvisible</CommandFlag>
               <CommandFlag>DynamicVisibility</CommandFlag>
           If you do not want an image next to your command, remove the Icon node /> -->
-      <Button guid="guidBuildStartupProjectCommandPackageCmdSet" id="BuildStartupProjectCommandId" priority="0x0100" type="Button">
-        <Parent guid="guidBuildStartupProjectCommandPackageCmdSet" id="MyMenuGroup" />
+      <Button guid="guidCaretCommandsPackageCmdSet" id="AdvancedNextWordCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCaretCommandsPackageCmdSet" id="MyMenuGroup" />
         <Strings>
-          <ButtonText>Build Startup Project</ButtonText>
+          <ButtonText>AdvancedNextWord</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCaretCommandsPackageCmdSet" id="AdvancedPreviousWordCommandId" priority="0x0200" type="Button">
+        <Parent guid="guidCaretCommandsPackageCmdSet" id="MyMenuGroup" />
+        <Strings>
+          <ButtonText>AdvancedPreviousWord</ButtonText>
         </Strings>
       </Button>
     </Buttons>
@@ -72,12 +78,13 @@
 
   <Symbols>
     <!-- This is the package guid. -->
-    <GuidSymbol name="guidBuildStartupProjectCommandPackage" value="{039506cd-509e-4514-8797-2b94111de9c2}" />
+    <GuidSymbol name="guidCaretCommandsPackage" value="{39346d05-85d0-4141-bc15-f7b179afe1fc}" />
 
     <!-- This is the guid used to group the menu commands together -->
-    <GuidSymbol name="guidBuildStartupProjectCommandPackageCmdSet" value="{8d15eab3-f107-4d6a-b4c3-59ba5b0aadde}">
-      <IDSymbol name="MyMenuGroup" value="0x1020" />
-      <IDSymbol name="BuildStartupProjectCommandId" value="0x0100" />
+    <GuidSymbol name="guidCaretCommandsPackageCmdSet" value="{925c9a20-7c34-4406-b9a8-17a1b657d1d1}">
+      <IDSymbol name="MyMenuGroup"                value="0x1020" />
+      <IDSymbol name="AdvancedNextWordCommandId"     value="0x0100" />
+      <IDSymbol name="AdvancedPreviousWordCommandId" value="0x0200" />
     </GuidSymbol>
 
   </Symbols>

@@ -44,7 +44,6 @@
           If you do not want an image next to your command, remove the Icon node /> -->
       <Button guid="guidCommandlineArgsToolWindowPackageCmdSet" id="CommandlineArgsToolWindowCommandId" priority="0x0100" type="Button">
         <Parent guid="guidSHLMainMenu" id="IDG_VS_WNDO_OTRWNDWS1"/>
-        <Icon guid="guidImages" id="bmpPic1" />
         <Strings>
           <ButtonText>CommandlineArgsToolWindow</ButtonText>
         </Strings>
@@ -58,7 +57,6 @@
             bitmap strip containing the bitmaps and then there are the numeric ids of the elements used
             inside a button definition. An important aspect of this declaration is that the element id
             must be the actual index (1-based) of the bitmap inside the bitmap strip. -->
-      <Bitmap guid="guidImages" href="Resources\CommandlineArgsToolWindowCommand.png" usedList="bmpPic1, bmpPic2, bmpPicSearch, bmpPicX, bmpPicArrows, bmpPicStrikethrough"/>
     </Bitmaps>
   </Commands>
 
@@ -69,15 +67,6 @@
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidCommandlineArgsToolWindowPackageCmdSet" value="{0a89b57b-a57a-4f93-9588-8570d141738a}">
       <IDSymbol name="CommandlineArgsToolWindowCommandId" value="0x0100" />
-    </GuidSymbol>
-
-    <GuidSymbol name="guidImages" value="{46f0f262-54cf-4ad7-bd24-d49a85ee6fa0}" >
-      <IDSymbol name="bmpPic1" value="1" />
-      <IDSymbol name="bmpPic2" value="2" />
-      <IDSymbol name="bmpPicSearch" value="3" />
-      <IDSymbol name="bmpPicX" value="4" />
-      <IDSymbol name="bmpPicArrows" value="5" />
-      <IDSymbol name="bmpPicStrikethrough" value="6" />
     </GuidSymbol>
   </Symbols>
 </CommandTable>
