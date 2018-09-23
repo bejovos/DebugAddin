@@ -77,7 +77,7 @@ namespace DebugAddin.BuildStartupProject
 
         foreach (EnvDTE.Window window in dte.Windows)
           {
-          if (window.Caption.StartsWith("Pending Changes"))
+          if (window.Caption.StartsWith("Changes"))
             {
             window.Activate();
             break;
