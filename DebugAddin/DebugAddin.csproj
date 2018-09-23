@@ -65,13 +65,9 @@
     <Compile Include="CmdArgs\CommandlineArgsToolWindowPackage.cs" />
     <Compile Include="CmdArgs\DataBaseRefresher.cs" />
     <Compile Include="CmdArgs\Utils.cs" />
-    <Compile Include="DiffOpenDocument\DiffOpenDocumentCommand.cs" />
-    <Compile Include="DiffOpenDocument\DiffOpenDocumentCommandPackage.cs" />
     <Compile Include="DragAndDrop\DragAndDropPackage.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="RuntimeDumper\RuntimeDumperPackage.cs" />
-    <Compile Include="ViewHistoryCommand\ViewHistoryCommand.cs" />
-    <Compile Include="ViewHistoryCommand\ViewHistoryCommandPackage.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
@@ -88,16 +84,6 @@
     </VSCTCompile>
     <Content Include="BuildStartupProject\Resources\BuildStartupProjectCommand.png" />
     <Content Include="BuildStartupProject\Resources\BuildStartupProjectCommandPackage.ico" />
-    <VSCTCompile Include="DiffOpenDocument\DiffOpenDocumentCommandPackage.vsct">
-      <ResourceName>Menus3.ctmenu</ResourceName>
-    </VSCTCompile>
-    <Content Include="DiffOpenDocument\Resources\DiffOpenDocumentCommand.png" />
-    <Content Include="DiffOpenDocument\Resources\DiffOpenDocumentCommandPackage.ico" />
-    <Content Include="ViewHistoryCommand\Resources\ViewHistoryCommand.png" />
-    <Content Include="ViewHistoryCommand\Resources\ViewHistoryCommandPackage.ico" />
-    <VSCTCompile Include="ViewHistoryCommand\ViewHistoryCommandPackage.vsct">
-      <ResourceName>Menus1.ctmenu</ResourceName>
-    </VSCTCompile>
     <VSCTCompile Include="CmdArgs\CommandlineArgsToolWindowPackage.vsct">
       <ResourceName>Menus.ctmenu</ResourceName>
     </VSCTCompile>
