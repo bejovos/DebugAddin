@@ -55,6 +55,8 @@ namespace DebugAddin.BuildStartupProject
       try
         {
         DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));        
+        if (dte.Solution.SolutionBuild.BuildState == vsBuildState.vsBuildStateInProgress)
+          return;
         string project_name = "";
         foreach (String s in (Array)dte.Solution.SolutionBuild.StartupProjects)
           {

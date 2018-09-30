@@ -71,6 +71,7 @@ namespace DebugAddin.CaretCommands
       await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
       await NextWordCommand.InitializeAsync(this);
       await PreviousWordCommand.InitializeAsync(this);
+      await FindCommand.InitializeAsync(this);
       }
 
     #endregion

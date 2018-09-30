@@ -57,6 +57,7 @@
   <ItemGroup>
     <Compile Include="BuildStartupProject\BuildStartupProjectCommand.cs" />
     <Compile Include="BuildStartupProject\BuildStartupProjectCommandPackage.cs" />
+    <Compile Include="CaretCommands\FindCommand.cs" />
     <Compile Include="CaretCommands\NextWordCommand.cs" />
     <Compile Include="CaretCommands\CaretCommandsPackage.cs" />
     <Compile Include="CaretCommands\PreviousWordCommand.cs" />

@@ -55,13 +55,19 @@
       <Button guid="guidCaretCommandsPackageCmdSet" id="AdvancedNextWordCommandId" priority="0x0100" type="Button">
         <Parent guid="guidCaretCommandsPackageCmdSet" id="MyMenuGroup" />
         <Strings>
-          <ButtonText>AdvancedNextWord</ButtonText>
+          <ButtonText>Advanced Next Word</ButtonText>
         </Strings>
       </Button>
-      <Button guid="guidCaretCommandsPackageCmdSet" id="AdvancedPreviousWordCommandId" priority="0x0200" type="Button">
+      <Button guid="guidCaretCommandsPackageCmdSet" id="AdvancedPreviousWordCommandId" priority="0x0100" type="Button">
         <Parent guid="guidCaretCommandsPackageCmdSet" id="MyMenuGroup" />
         <Strings>
-          <ButtonText>AdvancedPreviousWord</ButtonText>
+          <ButtonText>Advanced Previous Word</ButtonText>
+        </Strings>
+      </Button>
+      <Button guid="guidCaretCommandsPackageCmdSet" id="AdvancedFindCommandId" priority="0x0100" type="Button">
+        <Parent guid="guidCaretCommandsPackageCmdSet" id="MyMenuGroup" />
+        <Strings>
+          <ButtonText>Advanced Find Command</ButtonText>
         </Strings>
       </Button>
     </Buttons>
@@ -82,9 +88,10 @@
 
     <!-- This is the guid used to group the menu commands together -->
     <GuidSymbol name="guidCaretCommandsPackageCmdSet" value="{925c9a20-7c34-4406-b9a8-17a1b657d1d1}">
-      <IDSymbol name="MyMenuGroup"                value="0x1020" />
+      <IDSymbol name="MyMenuGroup"                   value="0x1020" />
       <IDSymbol name="AdvancedNextWordCommandId"     value="0x0100" />
       <IDSymbol name="AdvancedPreviousWordCommandId" value="0x0200" />
+      <IDSymbol name="AdvancedFindCommandId"         value="0x0300" />
     </GuidSymbol>
 
   </Symbols>
