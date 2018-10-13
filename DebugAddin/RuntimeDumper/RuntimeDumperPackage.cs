@@ -132,16 +132,26 @@ namespace DebugAddin
         if (index != -1)
           propertyInfo[0].bstrType = propertyInfo[0].bstrType.Remove(index);
         bool isPointer = IsEndsWith(propertyInfo[0].bstrType, "*") || IsEndsWith(propertyInfo[0].bstrType, "* const");
+        bool isReference = IsEndsWith(propertyInfo[0].bstrType, "&");
 
         string variableName = propertyInfo[0].bstrName;
         if (propertyInfo[0].bstrFullName != propertyInfo[0].bstrName)
           variableName = new Regex(@"^[^$.-]*").Match(propertyInfo[0].bstrFullName).Value + "..." + variableName;
         variableName = new Regex("[\"'\\/ ]").Replace(variableName, "_");
-        //variableName.Replace("\"", " ").Replace("'", " ").Replace("\\", " ").Replace("/", " ").Replace(" ", "_");
 
         string expression = ExecuteExpression((isPointer ? "" : "&") + propertyInfo[0].bstrFullName);
         
-        string typeName = propertyInfo[0].bstrType + (isPointer ? " *" : "");
+        string typeName;
+        if (isReference)
+          {
+          int length = propertyInfo[0].bstrType.Length;
+          typeName = propertyInfo[0].bstrType.Substring(0, length - 1) + " *";
+          }
+        else if (isPointer)
+          typeName = propertyInfo[0].bstrType;
+        else
+          typeName = propertyInfo[0].bstrType + " *";
+
         typeName = "\\\"" + new Regex(@"[\w.]+!").Replace(typeName, "") + "\\\"";
 
         if (Convert.ToUInt64(expression, 16) == 0)
