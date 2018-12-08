@@ -24,17 +24,29 @@ namespace DebugAddin.CmdArgs
   [Guid("767ce98b-8f7b-41ee-b33f-750b2a6e2fcb")]
   public class CommandlineArgsToolWindow : ToolWindowPane
     {
+    CommandlineArgsToolWindowControl myControl;
     /// <summary>
     /// Initializes a new instance of the <see cref="CommandlineArgsToolWindow"/> class.
     /// </summary>
     public CommandlineArgsToolWindow() : base(null)
       {
-    this.Caption = "Commandline Arguments";
+      this.Caption = "Commandline Arguments";
 
-    // This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
-    // we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on
-    // the object returned by the Content property.
-    this.Content = new CommandlineArgsToolWindowControl();
+      // This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
+      // we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on
+      // the object returned by the Content property.
+      myControl = new CommandlineArgsToolWindowControl();
+      this.Content = myControl;
+      }
+
+    public override void OnToolWindowCreated()
+      {
+      myControl.toolwindow = this;
+      }
+
+    protected override void OnClose()
+      {
+      myControl.toolwindow = null;
       }
     }
   }

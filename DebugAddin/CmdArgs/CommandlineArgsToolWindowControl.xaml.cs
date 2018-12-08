@@ -322,6 +322,7 @@ namespace DebugAddin.CmdArgs
         }
       }
 
+    public CommandlineArgsToolWindow toolwindow;
     private void SetStartupFromRow(DataRow row)
       {
       if (row == null)
@@ -332,12 +333,14 @@ namespace DebugAddin.CmdArgs
 
         if (parsedRow == null || parsedRow.project == null)
           return;
-
         dynamic vcPrj = (dynamic)parsedRow.project.Object; // is VCProject
         dynamic vcCfg = vcPrj.ActiveConfiguration; // is VCConfiguration
         dynamic vcDbg = vcCfg.DebugSettings;  // is VCDebugSettings
         vcDbg.Command = parsedRow.command;
         vcDbg.CommandArguments = parsedRow.commandArguments;
+
+        string caption = row["CommandArguments"] as string;
+        toolwindow.Caption = "Args: " + caption.Replace("-", "‐"); // replcace &#45 with &#8208
 
         UIHierarchyItem item = Utils.FindUIHierarchyItem(parsedRow.project);
         item.Select(vsUISelectionType.vsUISelectionTypeSelect);
