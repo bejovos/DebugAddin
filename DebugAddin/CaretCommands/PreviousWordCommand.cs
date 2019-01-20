@@ -4,6 +4,7 @@ using Microsoft.VisualStudio.Shell;
 using EnvDTE;
 using EnvDTE80;
 using Task = System.Threading.Tasks.Task;
+using Microsoft.VisualStudio.TextManager.Interop;
 
 namespace DebugAddin.CaretCommands
   {
@@ -48,25 +49,30 @@ namespace DebugAddin.CaretCommands
       }
 
     DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
+    IVsTextManager textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
 
     private void Execute(object sender, EventArgs e)
       {
-      TextSelection sel = (TextSelection)dte.ActiveDocument.Selection;
-      if (sel.CurrentColumn == 1)
+      IVsTextView textView;
+      textManager.GetActiveView(1, null, out textView);
+      
+      int lineOld, columnOld;
+      textView.GetSelection(out _, out _, out lineOld, out columnOld);
+
+      if (columnOld == 0 && lineOld > 0)
         {
-        sel.CharLeft();
+        string line;
+        textView.GetTextStream(lineOld - 1, 0, lineOld, 0, out line);
+
         // move cursor to the last non-whitespace char in the previous line
-        var editPoint = sel.ActivePoint.CreateEditPoint();
-        string line = editPoint.GetText(-editPoint.LineLength);
-        for (int i = line.Length - 1; i >= 0; --i)
+        for (int i = line.Length - 2; i >= columnOld; --i)
           if (line[i] != ' ')
             {
-            sel.CharLeft(false, line.Length - i - 1);
+            textView.SetSelection(lineOld - 1, i + 1, lineOld - 1, i + 1);
             return;
             }
         }
-      else 
-        sel.WordLeft();
+      dte.ExecuteCommand("Edit.WordPrevious");
       }
     }
   }
