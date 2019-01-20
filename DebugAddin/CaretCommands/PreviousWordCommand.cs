@@ -54,8 +54,16 @@ namespace DebugAddin.CaretCommands
       TextSelection sel = (TextSelection)dte.ActiveDocument.Selection;
       if (sel.CurrentColumn == 1)
         {
-        sel.WordLeft();
-        NextWordCommand.Instance.Execute(sender, e);
+        sel.CharLeft();
+        // move cursor to the last non-whitespace char in the previous line
+        var editPoint = sel.ActivePoint.CreateEditPoint();
+        string line = editPoint.GetText(-editPoint.LineLength);
+        for (int i = line.Length - 1; i >= 0; --i)
+          if (line[i] != ' ')
+            {
+            sel.CharLeft(false, line.Length - i - 1);
+            return;
+            }
         }
       else 
         sel.WordLeft();

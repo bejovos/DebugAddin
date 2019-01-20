@@ -56,18 +56,17 @@ namespace DebugAddin.CaretCommands
       sel.WordRight();
       if (sel.CurrentColumn == 1)
         {
+        // check if previous position was last non-whitespace char
+        // if not - move cursor to the last non-whitespace char in the previous line
         var editPoint = sel.ActivePoint.CreateEditPoint();
-        string text = editPoint.GetText(-2);
-        if (text == " \r\n")
-          {
-          sel.CharLeft();
-          sel.WordLeft();
-          if (sel.CurrentColumn == columnBefore)
+        editPoint.CharLeft(); // at the end of the previous line
+        string line = editPoint.GetText(columnBefore - editPoint.LineLength - 1);
+        for (int i = line.Length - 1; i >= 0; --i)
+          if (line[i] != ' ')
             {
-            // rollback our fix if come to the same place 
-            sel.MoveToPoint(editPoint);
+            sel.CharLeft(false, line.Length - i);
+            return;
             }
-          }
         }
       }
     }
