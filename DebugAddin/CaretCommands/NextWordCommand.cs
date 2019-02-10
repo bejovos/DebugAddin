@@ -57,12 +57,12 @@ namespace DebugAddin.CaretCommands
       textManager.GetActiveView(1, null, out textView);
       
       int lineOld, columnOld;
-      textView.GetSelection(out _, out _, out lineOld, out columnOld);
+      textView.GetCaretPos(out lineOld, out columnOld);
 
       dte.ExecuteCommand("Edit.WordNext");
 
-      int lineNew, columnNew;
-      textView.GetSelection(out _, out _, out lineNew, out columnNew);
+      int columnNew;
+      textView.GetCaretPos(out _, out columnNew);
 
       if (columnNew == 0)
         {
@@ -74,9 +74,9 @@ namespace DebugAddin.CaretCommands
         // check if previous position was last non-whitespace char
         // if not - move cursor to the last non-whitespace char in the previous line
         for (int i = line.Length - 2; i >= columnOld; --i)
-          if (line[i] != ' ')
+          if (line[i] != ' ' && line[i] != '\r' && line[i] != '\n')
             {
-            textView.SetSelection(lineOld, i + 1, lineOld, i + 1);
+            textView.SetCaretPos(lineOld, i + 1);
             return;
             }
         }

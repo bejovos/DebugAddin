@@ -57,7 +57,7 @@ namespace DebugAddin.CaretCommands
       textManager.GetActiveView(1, null, out textView);
       
       int lineOld, columnOld;
-      textView.GetSelection(out _, out _, out lineOld, out columnOld);
+      textView.GetCaretPos(out lineOld, out columnOld);
 
       if (columnOld == 0 && lineOld > 0)
         {
@@ -66,13 +66,21 @@ namespace DebugAddin.CaretCommands
 
         // move cursor to the last non-whitespace char in the previous line
         for (int i = line.Length - 2; i >= columnOld; --i)
-          if (line[i] != ' ')
+          if (line[i] != ' ' && line[i] != '\r' && line[i] != '\n')
             {
-            textView.SetSelection(lineOld - 1, i + 1, lineOld - 1, i + 1);
+            textView.SetCaretPos(lineOld - 1, i + 1);
             return;
             }
         }
       dte.ExecuteCommand("Edit.WordPrevious");
+
+      if (columnOld != 0)
+        {
+        int lineNew;
+        textView.GetCaretPos(out lineNew, out _);
+        if (lineNew + 1 == lineOld) // hack to detect regions and prevent their uncollapsing, will not work for regions with 2 lines
+          textView.SetCaretPos(lineOld, 0);
+        }
       }
     }
   }
