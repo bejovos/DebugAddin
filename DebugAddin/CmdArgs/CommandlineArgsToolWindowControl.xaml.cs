@@ -16,6 +16,13 @@ namespace DebugAddin.CmdArgs
 
   public partial class CommandlineArgsToolWindowControl : UserControl, IVsSolutionEvents
     {
+    public static CommandlineArgsToolWindowControl Instance = null;
+
+    public static void Initialize()
+      {
+      Instance = new CommandlineArgsToolWindowControl();
+      }
+
     DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
 
     List<string> roots = new List<string> { }; // paths to MatSDK and/or MDCK

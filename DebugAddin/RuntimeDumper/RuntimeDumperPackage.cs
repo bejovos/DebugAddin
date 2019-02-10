@@ -215,6 +215,7 @@ namespace DebugAddin
     protected override void Initialize()
       {
       base.Initialize();
+      CommandlineArgsToolWindowControl.Initialize();
       }
 
     #endregion
