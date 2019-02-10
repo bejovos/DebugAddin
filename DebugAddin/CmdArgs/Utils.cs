@@ -31,22 +31,24 @@ namespace DebugAddin.CmdArgs
       End: ;
       }
 
-    static private Dictionary<string, Guid> panes = new Dictionary<string, Guid>();
+    static private Dictionary<string, OutputWindowPane> panes = new Dictionary<string, OutputWindowPane>();
     static public void PrintMessage(string from, string message, bool activate = false)
       {
-      Guid guid;
-      IVsOutputWindow outWindow = Package.GetGlobalService(typeof(SVsOutputWindow)) as IVsOutputWindow;
-      if (panes.TryGetValue(from, out guid) == false)
+      OutputWindowPane resultPane = null;
+      if (panes.TryGetValue(from, out resultPane) == false)
         {
-        guid = Guid.NewGuid();
-        outWindow.CreatePane(ref guid, from, 1, 1);
-        panes.Add(from, guid);
+        DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
+        OutputWindow outWindow = dte.Windows.Item(EnvDTE.Constants.vsWindowKindOutput).Object as OutputWindow;
+        foreach (OutputWindowPane pane in outWindow.OutputWindowPanes)
+          if (pane.Name == from)
+            resultPane = pane;
+        if (resultPane == null)
+          resultPane = outWindow.OutputWindowPanes.Add(from);
+        panes.Add(from, resultPane);
         }
-      IVsOutputWindowPane debugPane;
-      outWindow.GetPane(ref guid, out debugPane);
-      debugPane.OutputString(message + "\n");
+      resultPane.OutputString(message + "\n");
       if (activate)
-        debugPane.Activate();
+        resultPane.Activate();
       }
 
     static public IList<Project> GetAllProjectsInSolution()
