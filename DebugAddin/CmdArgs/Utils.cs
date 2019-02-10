@@ -39,12 +39,15 @@ namespace DebugAddin.CmdArgs
         {
         DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
         OutputWindow outWindow = dte.Windows.Item(EnvDTE.Constants.vsWindowKindOutput).Object as OutputWindow;
+        var activePane = outWindow.ActivePane;
         foreach (OutputWindowPane pane in outWindow.OutputWindowPanes)
           if (pane.Name == from)
             resultPane = pane;
         if (resultPane == null)
           resultPane = outWindow.OutputWindowPanes.Add(from);
         panes.Add(from, resultPane);
+        if (!activate)
+          activePane.Activate();
         }
       resultPane.OutputString(message + "\n");
       if (activate)
