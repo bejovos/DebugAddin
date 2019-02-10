@@ -148,22 +148,31 @@ namespace DebugAddin
         variableName = new Regex("[\"'\\/ ]").Replace(variableName, "_");
 
         string expression = ExecuteExpression((isPointer ? "" : "&") + propertyInfo[0].bstrFullName);
-        
-        string typeName;
-        if (isReference)
-          {
-          int length = propertyInfo[0].bstrType.Length;
-          typeName = propertyInfo[0].bstrType.Substring(0, length - 1) + " *";
-          }
-        else if (isPointer)
-          typeName = propertyInfo[0].bstrType;
-        else
-          typeName = propertyInfo[0].bstrType + " *";
-
-        typeName = "\\\"" + new Regex(@"[\w.]+!").Replace(typeName, "") + "\\\"";
-
         if (Convert.ToUInt64(expression, 16) == 0)
           throw new Exception("Incorrect argument!");
+
+        string typeName;
+        string dumpFunctionAddress = "0";
+        if (true)
+          {
+          if (visualizerId == 666)
+            {
+            DEBUG_CUSTOM_VIEWER[] viewers = new DEBUG_CUSTOM_VIEWER[1];
+            debugProperty.GetCustomViewerList(0, 1, viewers, out _);
+            dumpFunctionAddress = ExecuteExpression(viewers[0].bstrMenuName).Split(' ')[0];
+            typeName = viewers[0].bstrDescription;
+            }
+          else if (isReference)
+            {
+            int length = propertyInfo[0].bstrType.Length;
+            typeName = propertyInfo[0].bstrType.Substring(0, length - 1) + " *";
+            }
+          else if (isPointer)
+            typeName = propertyInfo[0].bstrType;
+          else
+            typeName = propertyInfo[0].bstrType + " *";
+          }
+        typeName = "\\\"" + new Regex(@"[\w.]+!").Replace(typeName, "") + "\\\"";
 
         global_expression = global_expression
           + " " + visualizerId.ToString()
@@ -171,6 +180,9 @@ namespace DebugAddin
           + " " + variableName
           + " " + typeName;
         global_expression_counter += 1;
+
+        if (visualizerId == 666)
+          global_expression += " " + dumpFunctionAddress;
 
         int expression_counter_value = global_expression_counter;
         var disp = System.Windows.Threading.Dispatcher.CurrentDispatcher;
