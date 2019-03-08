@@ -27,11 +27,12 @@ namespace DebugAddin
       return (s.Substring(s.Length - sub.Length) == sub);
       }
 
-    string ExecuteExpression(string expression, bool useDebugPane = false)
+    string ExecuteExpression(string expression, bool useAutoExpandRules = false)
       {
-      Utils.PrintMessage(useDebugPane ? "Debug" : "Dumper", "[Dumper] Expression: " + expression);
-      string value = dte.Debugger.GetExpression(expression).Value;
-      Utils.PrintMessage(useDebugPane ? "Debug" : "Dumper", "[Dumper] Result: " + value);
+      ThreadHelper.ThrowIfNotOnUIThread();
+      Utils.PrintMessage("Dumper", "[Dumper] Expression: " + expression);
+      string value = dte.Debugger.GetExpression(expression, useAutoExpandRules).Value;
+      Utils.PrintMessage("Dumper", "[Dumper] Result: " + value);
       return value;
       }
 
@@ -60,6 +61,7 @@ namespace DebugAddin
 
     string GetBaseAddress(string module_name)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       var process = (EnvDTE90.Process3)dte.Debugger.CurrentProcess;
       foreach (EnvDTE90.Module module in process.Modules)
         if (module.Name.ToLower() == module_name)
@@ -74,7 +76,7 @@ namespace DebugAddin
         {
         result = Convert.ToUInt64(value, fromBase);
         }
-      catch (Exception ex)
+      catch (Exception)
         {
         return null;
         }
@@ -83,6 +85,7 @@ namespace DebugAddin
 
     void Dump(int expression_counter_old)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       Stopwatch sw = new Stopwatch();
       sw.Start();
       try
@@ -95,47 +98,57 @@ namespace DebugAddin
           load_library_result = ExecuteExpression(
             "((void*(*)(wchar_t*))(" + 
             RunLibInf64("kernel32.dll LoadLibraryW") + "+" + GetBaseAddress("kernel32.dll") + 
-            "))(L\"Dumper.dll\")");
+            @"))(L""Dumper.dll"")");
           if (Parse(load_library_result, 16).GetValueOrDefault(0) == 0)
             throw new Exception("Load Library failure!");
 
-          global_shell_file = Path.GetTempFileName();
-          string expression = ExecuteExpression("((int(*)(wchar_t*))Dumper.dll!SetShellFile)(L\"" + global_shell_file.Replace("\\", "\\\\") + "\")");
-          if (Parse(expression).GetValueOrDefault(1) != 0)
-            throw new Exception("Shell file is not set!");
-
+          global_shell_file = ExecuteExpression("((wchar_t*(*)())Dumper.dll!GetShellFilePath)()", true);
+          global_shell_file = Regex.Match(global_shell_file, @"L""(.*)""$").Groups[1].Value;
+          global_shell_file = Regex.Replace(global_shell_file, @"\\(\\|""|')", "$1");
+          Utils.PrintMessage("Dumper", "[Dumper] Shell file: " + global_shell_file);
           processId = ((EnvDTE90.Process3)dte.Debugger.CurrentProcess).ProcessID;
           }
 
-        string result = ExecuteExpression("((int(*)(wchar_t*))Dumper.dll!DumpV)(L\"" + global_expression_counter.ToString() + global_expression + "\")", true);
+        dte.StatusBar.Text = "[Dumper] Dumping...";
+        string result = ExecuteExpression(@"((int(*)(wchar_t*))Dumper.dll!Dump)(L""" + global_expression_counter.ToString() + global_expression + @""")");
 
         if (result != "0")
           {
-          string expression = ExecuteExpression(
+          ExecuteExpression("((void(*)())Dumper.dll!Unload)()");
+          result = ExecuteExpression(
             "((int(*)(void*))(" + 
             RunLibInf64("kernel32.dll FreeLibrary") + "+" + GetBaseAddress("kernel32.dll") + 
             "))(" + load_library_result + ")");
-          if (Parse(expression).GetValueOrDefault(0) == 0)
+          if (Parse(result).GetValueOrDefault(0) == 0)
             throw new Exception("Free Library failure!");
           processId = 0;
-          Utils.PrintMessage("Debug", "[Dumper] [ERROR] Dumping error!", true);
+          throw new Exception("Dumping error!");
           }
 
         foreach (string line in File.ReadAllLines(global_shell_file))
+          {
+          Utils.PrintMessage("Debug", "[Dumper] Saved to: " + line);
           System.Diagnostics.Process.Start(line);
+          }
+
+        dte.StatusBar.Text = "[Dumper] Dumped successfully";
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Debug", "[Dumper] [ERROR] " + ex.Message + "\n" + ex.StackTrace, true);
+        dte.StatusBar.Text = "[Dumper] " + ex.Message;
+        dte.StatusBar.Highlight(true);
+        Utils.PrintMessage("Debug", "[Dumper] [ERROR] " + ex.Message, true);
+        Utils.PrintMessage("Dumper", "[Dumper] [ERROR] " + ex.Message + "\n" + ex.StackTrace);
         }
       sw.Stop();
-      Utils.PrintMessage("Debug", "[Dumper] Elapsed time: " + sw.Elapsed.ToString());
+      Utils.PrintMessage("Dumper", "[Dumper] Elapsed time: " + sw.Elapsed.ToString());
       global_expression = "";
       global_expression_counter = 0;
       }
 
     public int DisplayValue(uint ownerHwnd, uint visualizerId, IDebugProperty3 debugProperty)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       try
         {
         DEBUG_PROPERTY_INFO[] propertyInfo = new DEBUG_PROPERTY_INFO[1];
@@ -158,8 +171,8 @@ namespace DebugAddin
 
         string variableName = propertyInfo[0].bstrName;
         if (propertyInfo[0].bstrFullName != propertyInfo[0].bstrName)
-          variableName = new Regex(@"^[^$.-]*").Match(propertyInfo[0].bstrFullName).Value + "..." + variableName;
-        variableName = new Regex("[\"'\\/ ]").Replace(variableName, "_");
+          variableName = Regex.Match(propertyInfo[0].bstrFullName, @"^[^$.-]*").Value + "..." + variableName;
+        variableName = Regex.Replace(variableName, @"[""'\/ ]", "_");
 
         string expression = ExecuteExpression((isPointer ? "" : "&") + propertyInfo[0].bstrFullName);
         if (Parse(expression, 16).GetValueOrDefault(0) == 0)
@@ -188,7 +201,7 @@ namespace DebugAddin
           else
             typeName = propertyInfo[0].bstrType + " *";
           }
-        typeName = "\\\"" + new Regex(@"[\w.]+!").Replace(typeName, "") + "\\\"";
+        typeName = @"\""" + Regex.Replace(typeName, @"[\w.]+!", "") + @"\""";
 
         global_expression = global_expression
           + " " + visualizerId.ToString()
@@ -201,15 +214,17 @@ namespace DebugAddin
           global_expression += " " + dumpFunctionAddress;
 
         int expression_counter_value = global_expression_counter;
-        var disp = System.Windows.Threading.Dispatcher.CurrentDispatcher;
         System.Threading.Tasks.Task.Delay(1000).ContinueWith(t =>
           {
-            disp.BeginInvoke((DumpDelegate)((x) => Dump(x)), expression_counter_value);
-          });
+            Dump(expression_counter_value);
+          }, System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
         }
       catch (Exception ex)
         {
-        Utils.PrintMessage("Debug", "[Dumper] [ERROR] " + ex.Message + "\n" + ex.StackTrace, true);
+        dte.StatusBar.Text = "[Dumper] " + ex.Message;
+        dte.StatusBar.Highlight(true);
+        Utils.PrintMessage("Debug", "[Dumper] [ERROR] " + ex.Message, true);
+        Utils.PrintMessage("Dumper", "[Dumper] [ERROR] " + ex.Message + "\n" + ex.StackTrace);
         }
 
       return 0;
