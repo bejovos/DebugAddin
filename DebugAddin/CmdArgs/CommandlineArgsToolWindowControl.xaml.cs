@@ -158,6 +158,12 @@ namespace DebugAddin.CmdArgs
       {
       try
         {
+        ThreadHelper.ThrowIfNotOnUIThread();
+
+        if (dataGrid.SelectedItem == null)
+          return;
+        if (dte.Debugger.DebuggedProcesses.Count != 0)
+          return;
         var testCase = GetTestCaseFromRow((dataGrid.SelectedItem as DataRowView).Row);
         if (testCase == null)
           return;
