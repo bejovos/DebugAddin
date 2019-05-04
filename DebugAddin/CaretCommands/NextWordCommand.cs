@@ -51,35 +51,43 @@ namespace DebugAddin.CaretCommands
     DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
     IVsTextManager textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
 
+    private int GetLastPosition(string line)
+      {
+      if (line != null)
+        for (int i = line.Length - 1; i >= 0; --i)
+          if (line[i] != ' ' && line[i] != '\r' && line[i] != '\n')
+            return i + 1;
+      return -1;
+      }
+
     public void Execute(object sender, EventArgs e)
       {
-      IVsTextView textView;
-      textManager.GetActiveView(1, null, out textView);
-      
-      int lineOld, columnOld;
-      textView.GetCaretPos(out lineOld, out columnOld);
-
+      textManager.GetActiveView(1, null, out IVsTextView textView);
+      textView.GetCaretPos(out int lineOld, out int columnOld);
       dte.ExecuteCommand("Edit.WordNext");
+      textView.GetCaretPos(out int lineNew, out int columnNew);
 
-      int columnNew;
-      textView.GetCaretPos(out _, out columnNew);
-
-      if (columnNew == 0)
+      if (lineNew == lineOld)
         {
-        string line;
-        textView.GetTextStream(lineOld, 0, lineOld + 1, 0, out line);
-        if (line == null)
+        IVsTextLines lines = null;
+        textView.GetBuffer(out lines);
+        lines.GetLengthOfLine(lineOld, out int lineLength);
+        if (lineLength != columnNew)
           return;
-
-        // check if previous position was last non-whitespace char
-        // if not - move cursor to the last non-whitespace char in the previous line
-        for (int i = line.Length - 2; i >= columnOld; --i)
-          if (line[i] != ' ' && line[i] != '\r' && line[i] != '\n')
-            {
-            textView.SetCaretPos(lineOld, i + 1);
-            return;
-            }
         }
+
+      textView.GetTextStream(lineOld, columnOld, lineOld + 1, 0, out string line);             
+      int lastPosition = GetLastPosition(line);
+      if (lastPosition == -1)
+        {
+        textView.SetCaretPos(lineOld, 0);              
+        if (columnOld == 0)
+          dte.ExecuteCommand("Edit.LineEnd");
+        else
+          dte.ExecuteCommand("Edit.LineStart");
+        }
+      else 
+        textView.SetCaretPos(lineOld, columnOld + lastPosition);
       }
     }
   }

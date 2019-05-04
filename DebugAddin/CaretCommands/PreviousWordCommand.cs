@@ -51,35 +51,61 @@ namespace DebugAddin.CaretCommands
     DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
     IVsTextManager textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
 
+    private int GetLastPosition(string line)
+      {
+      if (line != null)
+        for (int i = line.Length - 1; i >= 0; --i)
+          if (line[i] != ' ' && line[i] != '\r' && line[i] != '\n')
+            return i + 1;
+      return -1;
+      }
+
+    private int GetFirstPosition(string line)
+      {
+      if (line != null)
+        for (int i = 0; i < line.Length; ++i)
+          if (line[i] != ' ' && line[i] != '\r' && line[i] != '\n')
+            return i;
+      return 0;
+      }
+
+
     private void Execute(object sender, EventArgs e)
       {
-      IVsTextView textView;
-      textManager.GetActiveView(1, null, out textView);
-      
-      int lineOld, columnOld;
-      textView.GetCaretPos(out lineOld, out columnOld);
-
-      if (columnOld == 0 && lineOld > 0)
-        {
-        string line;
-        textView.GetTextStream(lineOld - 1, 0, lineOld, 0, out line);
-
-        // move cursor to the last non-whitespace char in the previous line
-        for (int i = line.Length - 2; i >= columnOld; --i)
-          if (line[i] != ' ' && line[i] != '\r' && line[i] != '\n')
-            {
-            textView.SetCaretPos(lineOld - 1, i + 1);
-            return;
-            }
-        }
+      textManager.GetActiveView(1, null, out IVsTextView textView);
+      textView.GetCaretPos(out int lineOld, out int columnOld);
       dte.ExecuteCommand("Edit.WordPrevious");
+      textView.GetCaretPos(out int lineNew, out int columnNew);
 
-      if (columnOld != 0)
+      string line;
+      if (lineOld == lineNew)
         {
-        int lineNew;
-        textView.GetCaretPos(out lineNew, out _);
-        if (lineNew + 1 == lineOld) // hack to detect regions and prevent their uncollapsing, will not work for regions with 2 lines
+        if (columnNew != 0)
+          return;
+        textView.GetTextStream(lineOld, 0, lineOld + 1, 0, out line);             
+        if (line[0] != ' ' && line[0] != '\r' && line[0] != '\n')
+          return;
+        }
+      else
+        textView.GetTextStream(lineOld, 0, lineOld + 1, 0, out line);             
+
+      int firstPosition = GetFirstPosition(line);
+      if (firstPosition < columnOld)
+        {
+        textView.SetCaretPos(lineOld, firstPosition);
+        return;
+        }
+
+      int lastPosition = GetLastPosition(line);
+      if (lastPosition == -1)
+        {
+        if (lineOld != lineNew)
           textView.SetCaretPos(lineOld, 0);
+        dte.ExecuteCommand("Edit.LineEnd");
+        }
+      else
+        {
+        textView.SetCaretPos(lineOld, lastPosition);
         }
       }
     }
