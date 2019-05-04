@@ -9,7 +9,11 @@ using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.IO;
 using System.Runtime.InteropServices;
+using EnvDTE;
+using EnvDTE80;
+using Microsoft;
 using Microsoft.VisualStudio;
 using Microsoft.VisualStudio.OLE.Interop;
 using Microsoft.VisualStudio.Shell;
@@ -35,7 +39,7 @@ namespace DebugAddin
       messageId = RegisterWindowMessage("MyDragDropMessage32");
       // Create an instance of HookProc.
       hook = new HookProc(MouseHookProc);
-      hHook = SetWindowsHookEx(4, hook, (System.IntPtr)0, AppDomain.GetCurrentThreadId());
+      hHook = SetWindowsHookEx(4, hook, (IntPtr)0, AppDomain.GetCurrentThreadId());
     }
 
     [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
@@ -66,6 +70,7 @@ namespace DebugAddin
 
     public static int MouseHookProc(int nCode, IntPtr wParam, IntPtr lParam)
     {
+      ThreadHelper.ThrowIfNotOnUIThread();
       if (nCode < 0)
         return CallNextHookEx(0, nCode, wParam, lParam);
 
@@ -73,8 +78,9 @@ namespace DebugAddin
 
       if (inputParams.message == messageId)
       {
-        EnvDTE80.DTE2 dte = (EnvDTE80.DTE2)ServiceProvider.GlobalProvider.GetService(typeof(EnvDTE.DTE));
-        dte.ItemOperations.OpenFile(System.IO.File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "devenv.exe.buffer"));
+        DTE2 dte = (DTE2)ServiceProvider.GlobalProvider.GetService(typeof(DTE));
+        Assumes.Present(dte);
+        dte.ItemOperations.OpenFile(File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory + "devenv.exe.buffer"));
       }
 
       return CallNextHookEx(0, nCode, wParam, lParam);

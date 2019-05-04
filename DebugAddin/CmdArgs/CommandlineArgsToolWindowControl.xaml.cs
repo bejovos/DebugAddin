@@ -31,6 +31,7 @@ namespace DebugAddin.CmdArgs
 
     static private void SaveCmdArgs(DataTable dataTable)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
       var file = new StreamWriter(dte.Solution.FullName + @".debugaddin.cmdargs");
       file.WriteLine("Version 1.2");
@@ -44,6 +45,7 @@ namespace DebugAddin.CmdArgs
 
     private void SaveRoots()
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       var file = new StreamWriter(dte.Solution.FullName + @".debugaddin.roots");
       file.WriteLine("Version 1.2");
       foreach (string root in roots)
@@ -55,6 +57,7 @@ namespace DebugAddin.CmdArgs
 
     private void LoadRoots()
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       try
         {
         if (File.Exists(dte.Solution.FullName + @".debugaddin.roots"))
@@ -80,6 +83,7 @@ namespace DebugAddin.CmdArgs
     private void LoadSettings(bool quiet)
       {
       // CmdArgs
+      ThreadHelper.ThrowIfNotOnUIThread();
 
       DataTable dataTable = new DataTable();
       dataTable.Columns.Add("CommandArguments");
@@ -134,6 +138,7 @@ namespace DebugAddin.CmdArgs
     CommandEvents commandDebugStartEvents;
     public CommandlineArgsToolWindowControl()
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       InitializeComponent();
 
       uint cookie;
@@ -233,6 +238,7 @@ namespace DebugAddin.CmdArgs
 
     private ParsedRow ParseRow(DataRow row)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       if (row == null)
         return null;
 
@@ -301,11 +307,13 @@ namespace DebugAddin.CmdArgs
 
     private DataBaseRefresher.DataBase.TestCase GetTestCaseFromRow(DataRow row)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       return ParseRow(row)?.testCase;
       }
 
     private Project GetProjectFromRow(DataRow row)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       if (row == null)
         return null;
       try
@@ -321,6 +329,7 @@ namespace DebugAddin.CmdArgs
 
     private void OpenFileFromRow(DataRow row)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       if (row == null)
         return;
       try
@@ -338,6 +347,7 @@ namespace DebugAddin.CmdArgs
     public CommandlineArgsToolWindow toolwindow;
     private void SetStartupFromRow(DataRow row)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       if (row == null)
         return;
       try
@@ -369,16 +379,19 @@ namespace DebugAddin.CmdArgs
 
     private void BuildEvents_OnBuildDone(vsBuildScope Scope, vsBuildAction Action)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       SetStartupFromRow((dataGrid.SelectedItem as DataRowView)?.Row);
       }
 
     private void DataGrid_SelectedCellsChanged(object sender, SelectedCellsChangedEventArgs e)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       SetStartupFromRow((dataGrid.SelectedItem as DataRowView)?.Row);
       }
 
     private void Row_DoubleClick(object sender, System.Windows.Input.MouseButtonEventArgs e)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       dataGrid.CommitEdit(DataGridEditingUnit.Row, true);
       SetStartupFromRow(((sender as DataGridRow).Item as DataRowView)?.Row);
       OpenFileFromRow(((sender as DataGridRow).Item as DataRowView)?.Row);
@@ -386,6 +399,7 @@ namespace DebugAddin.CmdArgs
 
     private void DataGrid_PreviewKeyDown(object sender, System.Windows.Input.KeyEventArgs e)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       if (e.Key == System.Windows.Input.Key.Enter)
         {
         DataRowView row = dataGrid.SelectedItem as DataRowView;
@@ -405,6 +419,7 @@ namespace DebugAddin.CmdArgs
 
     void UpdateRow(DataRow row)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       try
         {
         if (row["Filename"] == null || row["Filename"] as string == null || row["Filename"] as string == "")
@@ -421,6 +436,7 @@ namespace DebugAddin.CmdArgs
 
     private void DataGrid_RowEditEnding(object sender, DataGridRowEditEndingEventArgs e)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       DataRowView row = dataGrid.SelectedItem as DataRowView;
       UpdateRow(row.Row);
       SetStartupFromRow(row?.Row);
@@ -437,6 +453,7 @@ namespace DebugAddin.CmdArgs
 
     int IVsSolutionEvents.OnAfterOpenSolution(object pUnkReserved, int fNewSolution)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       LoadSettings(true);
 
       return VSConstants.S_OK;
@@ -495,7 +512,10 @@ namespace DebugAddin.CmdArgs
       databaseIsRefreshing = true;
       try
         {
-        await System.Threading.Tasks.Task.Run(() => new DataBaseRefresher().RefreshDataBase(roots, dte.Solution.FullName + @".debugaddin.algotests"));
+        await System.Threading.Tasks.Task.Run(() => { 
+          ThreadHelper.ThrowIfNotOnUIThread(); 
+          new DataBaseRefresher().RefreshDataBase(roots, dte.Solution.FullName + @".debugaddin.algotests"); 
+          });
         System.Windows.Forms.MessageBox.Show("Recreated!");
         LoadSettings(false);
         }
@@ -537,11 +557,13 @@ namespace DebugAddin.CmdArgs
 
     private void MenuItem_LoadSettings_Click(object sender, System.Windows.RoutedEventArgs e)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       LoadSettings(false);
       }
 
     private void MenuItem_EditInputConfig_Click(object sender, System.Windows.RoutedEventArgs e)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       try
         {
         var testCase = GetTestCaseFromRow((dataGrid.SelectedItem as DataRowView).Row);
@@ -558,6 +580,7 @@ namespace DebugAddin.CmdArgs
 
     private void DataGrid_BeginningEdit(object sender, DataGridBeginningEditEventArgs e)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       try
         {
         DataRowView row = (DataRowView)e.Row.Item;
@@ -572,6 +595,7 @@ namespace DebugAddin.CmdArgs
 
     private void MenuItem_AddNewTestRoot_Click(object sender, System.Windows.RoutedEventArgs e)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       try
         {
         using (var dialog = new System.Windows.Forms.FolderBrowserDialog())

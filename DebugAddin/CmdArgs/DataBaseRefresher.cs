@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Linq;
+using Microsoft.VisualStudio.Shell;
 
 namespace DebugAddin.CmdArgs
   {
@@ -103,7 +104,7 @@ namespace DebugAddin.CmdArgs
       int operateLineNumber = 0;
       for (int lineNumber = 0; lineNumber < lines.Length; ++lineNumber)
         {
-        for (Match match = regex.Match(lines[lineNumber]); match.Success; match = match.NextMatch())
+        for (Match match = regex.Match(lines[lineNumber]); match.Success; )
           {
           operateLineNumber = lineNumber;
           break;
@@ -134,6 +135,7 @@ namespace DebugAddin.CmdArgs
 
     private void ProcessTestCase(string fileName)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       Regex regex = new Regex(@"\""[^\""]*\""", RegexOptions.None);
       string caseName = null;
       string operatorName = null;
@@ -181,6 +183,7 @@ namespace DebugAddin.CmdArgs
 
     public void RefreshDataBase(List<string> roots, string outputFile)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       List<string> directories = new List<string>{ };
       foreach (string root in roots)
         {

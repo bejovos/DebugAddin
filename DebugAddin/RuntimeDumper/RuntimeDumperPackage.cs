@@ -44,6 +44,7 @@ namespace DebugAddin
 
     static string RunLibInf64(string arguments)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       System.Diagnostics.Process process = new System.Diagnostics.Process();
       process.StartInfo.FileName = Path.GetDirectoryName(System.Reflection.Assembly.GetExecutingAssembly().Location) + @"\LibInf64.exe";
       process.StartInfo.Arguments = arguments;
@@ -214,10 +215,10 @@ namespace DebugAddin
           global_expression += " " + dumpFunctionAddress;
 
         int expression_counter_value = global_expression_counter;
-        System.Threading.Tasks.Task.Delay(1000).ContinueWith(t =>
-          {
-            Dump(expression_counter_value);
-          }, System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
+        _ = System.Threading.Tasks.Task.Delay(1000).ContinueWith(t =>
+            {
+              Dump(expression_counter_value);
+            }, System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
         }
       catch (Exception ex)
         {

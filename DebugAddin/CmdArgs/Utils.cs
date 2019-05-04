@@ -34,6 +34,7 @@ namespace DebugAddin.CmdArgs
     static private Dictionary<string, OutputWindowPane> panes = new Dictionary<string, OutputWindowPane>();
     static public void PrintMessage(string from, string message, bool activate = false)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       OutputWindowPane resultPane = null;
       if (panes.TryGetValue(from, out resultPane) == false)
         {
@@ -56,6 +57,7 @@ namespace DebugAddin.CmdArgs
 
     static public IList<Project> GetAllProjectsInSolution()
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
       Projects projects = dte.Solution.Projects;
       List<Project> list = new List<Project>();
@@ -83,6 +85,7 @@ namespace DebugAddin.CmdArgs
 
     static private IEnumerable<Project> GetSolutionFolderProjects(Project solutionFolder)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       List<Project> list = new List<Project>();
       for (var i = 1; i <= solutionFolder.ProjectItems.Count; i++)
         {
@@ -107,6 +110,7 @@ namespace DebugAddin.CmdArgs
 
     static public UIHierarchyItem FindUIHierarchyItem(Project pi)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       UIHierarchyItem retVal = null;
       DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
       foreach (UIHierarchyItem hierarchyItem in dte.ToolWindows.SolutionExplorer.UIHierarchyItems)
@@ -123,6 +127,7 @@ namespace DebugAddin.CmdArgs
 
     static private UIHierarchyItem Find(UIHierarchyItem hierarchyItem, Project pi)
       {
+      ThreadHelper.ThrowIfNotOnUIThread();
       UIHierarchyItem retVal = null;
       foreach (UIHierarchyItem childItem in hierarchyItem.UIHierarchyItems)
         {
