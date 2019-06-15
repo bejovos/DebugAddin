@@ -507,14 +507,15 @@ namespace DebugAddin.CmdArgs
 
     private async void MenuItem_RecreateDataBase_Click(object sender, System.Windows.RoutedEventArgs e)
       {
+      await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
       if (databaseIsRefreshing)
         return;
       databaseIsRefreshing = true;
       try
         {
-        await System.Threading.Tasks.Task.Run(() => { 
-          ThreadHelper.ThrowIfNotOnUIThread(); 
-          new DataBaseRefresher().RefreshDataBase(roots, dte.Solution.FullName + @".debugaddin.algotests"); 
+        string solutionName = dte.Solution.FullName;
+        await System.Threading.Tasks.Task.Run(async () => { 
+          await new DataBaseRefresher().RefreshDataBaseAsync(roots, solutionName + @".debugaddin.algotests"); 
           });
         System.Windows.Forms.MessageBox.Show("Recreated!");
         LoadSettings(false);

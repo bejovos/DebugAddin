@@ -53,14 +53,8 @@ namespace DebugAddin.CaretCommands
 
     public void Execute(object sender, EventArgs e)
       {
-      dte.ExecuteCommand("Edit.Find");
-      System.Threading.Tasks.Task.Delay(100).ContinueWith(t =>
-        {
-        dte.SuppressUI = true;
-        dte.ToolWindows.ErrorList.Parent.Activate();
-        dte.ActiveDocument.Activate();
-        dte.SuppressUI = false;
-        });
+      // remove me
+
       }
     }
   }

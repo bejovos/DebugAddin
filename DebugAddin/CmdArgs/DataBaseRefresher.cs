@@ -133,9 +133,8 @@ namespace DebugAddin.CmdArgs
       db.FillSourceFileInfo(operatorNameBinaryNameToSourceFile);
       }
 
-    private void ProcessTestCase(string fileName)
+    private async System.Threading.Tasks.Task ProcessTestCaseAsync(string fileName)
       {
-      ThreadHelper.ThrowIfNotOnUIThread();
       Regex regex = new Regex(@"\""[^\""]*\""", RegexOptions.None);
       string caseName = null;
       string operatorName = null;
@@ -173,23 +172,22 @@ namespace DebugAddin.CmdArgs
       catch (Exception ex)
         {
         var testCase = db.FindCaseByName(caseName);
-        Utils.PrintMessage("Exception", caseName + " " + caseFolder + " " + operatorName + " " + binaryName);
-        Utils.PrintMessage("Exception", testCase.caseName + " " + testCase.caseFolder + " " + testCase.operatorName + " " + testCase.binaryName);
-        Utils.PrintMessage("Exception", ex.Message);
+        await Utils.PrintMessageAsync("Exception", caseName + " " + caseFolder + " " + operatorName + " " + binaryName);
+        await Utils.PrintMessageAsync("Exception", testCase.caseName + " " + testCase.caseFolder + " " + testCase.operatorName + " " + testCase.binaryName);
+        await Utils.PrintMessageAsync("Exception", ex.Message);
         }
       }
 
     private DataBase db = new DataBase();
 
-    public void RefreshDataBase(List<string> roots, string outputFile)
+    public async System.Threading.Tasks.Task RefreshDataBaseAsync(List<string> roots, string outputFile)
       {
-      ThreadHelper.ThrowIfNotOnUIThread();
       List<string> directories = new List<string>{ };
       foreach (string root in roots)
         {
         string[] testCases = Directory.GetFiles(root + @"\AlgoTester\Cases\", "case.config", SearchOption.AllDirectories);
         foreach (string testCase in testCases)
-          ProcessTestCase(testCase);
+          await ProcessTestCaseAsync(testCase);
         directories.AddRange(Directory.GetDirectories(root + @"\Libraries\", "testable", SearchOption.AllDirectories));
         }
 

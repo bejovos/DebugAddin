@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Threading;
 
 namespace DebugAddin.CmdArgs
   {
@@ -32,6 +33,12 @@ namespace DebugAddin.CmdArgs
       }
 
     static private Dictionary<string, OutputWindowPane> panes = new Dictionary<string, OutputWindowPane>();
+    static public async System.Threading.Tasks.Task PrintMessageAsync(string from, string message, bool activate = false)
+      {
+      await ThreadHelper.JoinableTaskFactory.SwitchToMainThreadAsync();
+      PrintMessage(from, message, activate);
+      }
+
     static public void PrintMessage(string from, string message, bool activate = false)
       {
       ThreadHelper.ThrowIfNotOnUIThread();
