@@ -243,7 +243,7 @@ namespace DebugAddin
     public RuntimeDumperPackage()
       {
       base.Initialize();
-      IServiceContainer serviceContainer = (IServiceContainer)this;
+      IServiceContainer serviceContainer = this;
       if (serviceContainer != null)
         serviceContainer.AddService(typeof(IRuntimeDumperService), new RuntimeDumperService(), true);
       }
