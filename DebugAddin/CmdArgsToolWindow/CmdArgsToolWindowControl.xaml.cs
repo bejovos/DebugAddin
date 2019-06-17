@@ -11,16 +11,16 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Controls;
 
-namespace DebugAddin.CmdArgs
+namespace DebugAddin.CmdArgsToolWindow
   {
 
-  public partial class CommandlineArgsToolWindowControl : UserControl, IVsSolutionEvents
+  public partial class CmdArgsToolWindowControl : UserControl, IVsSolutionEvents
     {
-    public static CommandlineArgsToolWindowControl Instance = null;
+    public static CmdArgsToolWindowControl Instance = null;
 
     public static void Initialize()
       {
-      Instance = new CommandlineArgsToolWindowControl();
+      Instance = new CmdArgsToolWindowControl();
       }
 
     DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
@@ -136,7 +136,7 @@ namespace DebugAddin.CmdArgs
     CommandEvents commandDebugStartWithoutDebuggingEvents;
     CommandEvents commandDebugStartDebugTargetEvents;
     CommandEvents commandDebugStartEvents;
-    public CommandlineArgsToolWindowControl()
+    public CmdArgsToolWindowControl()
       {
       ThreadHelper.ThrowIfNotOnUIThread();
       InitializeComponent();
@@ -344,7 +344,7 @@ namespace DebugAddin.CmdArgs
         }
       }
 
-    public CommandlineArgsToolWindow toolwindow;
+    public CmdArgsToolWindow toolwindow;
     private void SetStartupFromRow(DataRow row)
       {
       ThreadHelper.ThrowIfNotOnUIThread();

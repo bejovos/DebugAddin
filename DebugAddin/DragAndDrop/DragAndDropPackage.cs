@@ -22,13 +22,13 @@ using Microsoft.Win32;
 
 namespace DebugAddin
   {
-  [PackageRegistration(UseManagedResourcesOnly = true)]
+  [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
   [InstalledProductRegistration("#110", "#112", "1.0", IconResourceID = 400)] // Info on this package for Help/About
   [Guid(DragAndDropPackage.PackageGuidString)]
-  [ProvideAutoLoad(VSConstants.UICONTEXT.NoSolution_string)]
-  [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExists_string)]
+  [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExists_string, PackageAutoLoadFlags.BackgroundLoad)]
+  [ProvideAutoLoad(VSConstants.UICONTEXT.NoSolution_string, PackageAutoLoadFlags.BackgroundLoad)]
   [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
-  public sealed class DragAndDropPackage : Package
+  public sealed class DragAndDropPackage : AsyncPackage
     {
     public const string PackageGuidString = "7f0d05e6-785c-4b2e-ae98-69df2a911976";
     int hHook = 0;
@@ -36,10 +36,6 @@ namespace DebugAddin
 #pragma warning disable 618
     public DragAndDropPackage()
     {
-      messageId = RegisterWindowMessage("MyDragDropMessage32");
-      // Create an instance of HookProc.
-      hook = new HookProc(MouseHookProc);
-      hHook = SetWindowsHookEx(4, hook, (IntPtr)0, AppDomain.GetCurrentThreadId());
     }
 
     [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
@@ -88,9 +84,15 @@ namespace DebugAddin
 
     #region Package Members
 
-    protected override void Initialize()
+    protected override async System.Threading.Tasks.Task InitializeAsync(System.Threading.CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
       {
-        base.Initialize();
+      await base.InitializeAsync(cancellationToken, progress);
+      await this.JoinableTaskFactory.SwitchToMainThreadAsync(cancellationToken);
+
+      messageId = RegisterWindowMessage("MyDragDropMessage32");
+      // Create an instance of HookProc.
+      hook = new HookProc(MouseHookProc);
+      hHook = SetWindowsHookEx(4, hook, (IntPtr)0, AppDomain.GetCurrentThreadId());
       }
 
     protected override void Dispose(bool disposing)

@@ -5,7 +5,7 @@ using System.Text.RegularExpressions;
 using System.Linq;
 using Microsoft.VisualStudio.Shell;
 
-namespace DebugAddin.CmdArgs
+namespace DebugAddin.CmdArgsToolWindow
   {
   class DataBaseRefresher
     {

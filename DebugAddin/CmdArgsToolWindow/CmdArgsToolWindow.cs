@@ -1,10 +1,4 @@
-﻿//------------------------------------------------------------------------------
-// <copyright file="CommandlineArgsToolWindow.cs" company="Microsoft">
-//     Copyright (c) Microsoft.  All rights reserved.
-// </copyright>
-//------------------------------------------------------------------------------
-
-namespace DebugAddin.CmdArgs
+﻿namespace DebugAddin.CmdArgsToolWindow
   {
   using System;
   using System.Runtime.InteropServices;
@@ -21,32 +15,30 @@ namespace DebugAddin.CmdArgs
   /// implementation of the IVsUIElementPane interface.
   /// </para>
   /// </remarks>
-  [Guid("767ce98b-8f7b-41ee-b33f-750b2a6e2fcb")]
-  public class CommandlineArgsToolWindow : ToolWindowPane
+  [Guid("8144752c-d149-45d9-b919-0fdd3d88de1e")]
+  public class CmdArgsToolWindow : ToolWindowPane
     {
-    CommandlineArgsToolWindowControl myControl;
     /// <summary>
-    /// Initializes a new instance of the <see cref="CommandlineArgsToolWindow"/> class.
+    /// Initializes a new instance of the <see cref="CmdArgsToolWindow"/> class.
     /// </summary>
-    public CommandlineArgsToolWindow() : base(null)
+    public CmdArgsToolWindow() : base(null)
       {
       this.Caption = "Commandline Arguments";
 
       // This is the user control hosted by the tool window; Note that, even if this class implements IDisposable,
       // we are not calling Dispose on this object. This is because ToolWindowPane calls Dispose on
       // the object returned by the Content property.
-      myControl = CommandlineArgsToolWindowControl.Instance;
-      this.Content = myControl;
+      this.Content = new CmdArgsToolWindowControl();
       }
 
     public override void OnToolWindowCreated()
       {
-      myControl.toolwindow = this;
+      (this.Content as CmdArgsToolWindowControl).toolwindow = this;
       }
 
     protected override void OnClose()
       {
-      myControl.toolwindow = null;
+      (this.Content as CmdArgsToolWindowControl).toolwindow = null;
       }
     }
   }

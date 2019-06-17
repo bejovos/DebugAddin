@@ -148,4 +148,16 @@
   <data name="5112" xml:space="preserve">
     <value>CaretCommands Visual Stuido Extension Detailed Info</value>
   </data>
+  <data name="6110" xml:space="preserve">
+    <value>CmdArgs Extension</value>
+  </data>
+  <data name="6112" xml:space="preserve">
+    <value>CmdArgs Visual Stuido Extension Detailed Info</value>
+  </data>
+  <data name="7110" xml:space="preserve">
+    <value>CmdArgsToolWindow Extension</value>
+  </data>
+  <data name="7112" xml:space="preserve">
+    <value>CmdArgsToolWindow Visual Stuido Extension Detailed Info</value>
+  </data>
 </root>

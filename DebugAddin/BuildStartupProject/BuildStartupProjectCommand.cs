@@ -64,7 +64,7 @@ namespace DebugAddin.BuildStartupProject
           }
 
         Project startupProject = null;
-        foreach (Project p in CmdArgs.Utils.GetAllProjectsInSolution())
+        foreach (Project p in Utils.GetAllProjectsInSolution())
           {
           if (p.UniqueName == project_name)
             {
@@ -72,7 +72,7 @@ namespace DebugAddin.BuildStartupProject
             break;
             }
           }
-        UIHierarchyItem item = CmdArgs.Utils.FindUIHierarchyItem(startupProject);
+        UIHierarchyItem item = Utils.FindUIHierarchyItem(startupProject);
         item.Select(vsUISelectionType.vsUISelectionTypeSelect);
         dte.ToolWindows.SolutionExplorer.Parent.Activate();
         dte.ExecuteCommand("Build.BuildSelection");
@@ -90,7 +90,7 @@ namespace DebugAddin.BuildStartupProject
         }
       catch (Exception ex)
         {
-        CmdArgs.Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
       }
     }

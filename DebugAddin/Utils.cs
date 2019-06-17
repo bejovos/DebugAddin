@@ -9,7 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Threading;
 
-namespace DebugAddin.CmdArgs
+namespace DebugAddin
   {
   static class Utils
     {

@@ -11,7 +11,6 @@ using System.IO;
 using Microsoft.VisualStudio.Shell.Interop;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using DebugAddin.CmdArgs;
 
 namespace DebugAddin
   {
@@ -234,14 +233,12 @@ namespace DebugAddin
     public delegate void DumpDelegate(int x);
     }
 
-  [PackageRegistration(UseManagedResourcesOnly = true)]
+  [PackageRegistration(UseManagedResourcesOnly = true, AllowsBackgroundLoading = true)]
   [InstalledProductRegistration("#1110", "#1112", "1.0", IconResourceID = 1400)] // Info on this package for Help/About
-  [ProvideAutoLoad(VSConstants.UICONTEXT.NoSolution_string)]
-  [ProvideAutoLoad(VSConstants.UICONTEXT.SolutionExists_string)]
   [SuppressMessage("StyleCop.CSharp.DocumentationRules", "SA1650:ElementDocumentationMustBeSpelledCorrectly", Justification = "pkgdef, VS and vsixmanifest are valid VS terms")]
   [Guid("AE816FBD-5FD2-4D75-AF20-0729F3239467")]
   [ProvideService(typeof(IRuntimeDumperService), ServiceName = "RuntimeDumperService")]
-  public sealed class RuntimeDumperPackage : Package
+  public sealed class RuntimeDumperPackage : AsyncPackage
     {
     public RuntimeDumperPackage()
       {
@@ -257,10 +254,9 @@ namespace DebugAddin
     /// Initialization of the package; this method is called right after the package is sited, so this is the place
     /// where you can put all the initialization code that rely on services provided by VisualStudio.
     /// </summary>
-    protected override void Initialize()
+    protected override async System.Threading.Tasks.Task InitializeAsync(System.Threading.CancellationToken cancellationToken, IProgress<ServiceProgressData> progress)
       {
-      base.Initialize();
-      CommandlineArgsToolWindowControl.Initialize();
+      await base.InitializeAsync(cancellationToken, progress);
       }
 
     #endregion
