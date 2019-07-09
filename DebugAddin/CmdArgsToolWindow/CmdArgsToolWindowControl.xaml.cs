@@ -47,7 +47,9 @@ namespace DebugAddin.CmdArgsToolWindow
       {
       ThreadHelper.ThrowIfNotOnUIThread();
       var file = new StreamWriter(dte.Solution.FullName + @".debugaddin.roots");
-      file.WriteLine("Version 1.2");
+      file.WriteLine("Version 1.3");
+      file.WriteLine(testSystemRoot);
+
       foreach (string root in roots)
         {
         file.WriteLine(root);
@@ -58,14 +60,17 @@ namespace DebugAddin.CmdArgsToolWindow
     private void LoadRoots()
       {
       ThreadHelper.ThrowIfNotOnUIThread();
+      roots = null;
+      testSystemRoot = null;
       try
         {
         if (File.Exists(dte.Solution.FullName + @".debugaddin.roots"))
           {
           string[] lines = File.ReadAllLines(dte.Solution.FullName + @".debugaddin.roots");
-          if (lines.Length > 0 && lines[0] == "Version 1.2")
+          if (lines.Length > 0 && lines[0] == "Version 1.3")
             {
-            roots = lines.Skip(1).ToList();
+            testSystemRoot = lines[1];
+            roots = lines.Skip(2).ToList();
             }
           }
         }
@@ -73,11 +78,6 @@ namespace DebugAddin.CmdArgsToolWindow
         {
         Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
         }
-
-      testSystemRoot = null;
-      foreach (string root in roots)
-        if (Directory.Exists(root + @"\AlgoTester\Utils\"))
-          testSystemRoot = root + @"\AlgoTester\";
       }
 
     private void LoadSettings(bool quiet)
@@ -133,9 +133,6 @@ namespace DebugAddin.CmdArgsToolWindow
       }
 
     BuildEvents buildEvents;
-    CommandEvents commandDebugStartWithoutDebuggingEvents;
-    CommandEvents commandDebugStartDebugTargetEvents;
-    CommandEvents commandDebugStartEvents;
     public CmdArgsToolWindowControl()
       {
       ThreadHelper.ThrowIfNotOnUIThread();
@@ -146,67 +143,17 @@ namespace DebugAddin.CmdArgsToolWindow
 
       buildEvents = dte.Events.BuildEvents;
       buildEvents.OnBuildDone += BuildEvents_OnBuildDone;
-
-      var command = dte.Commands.Item("Debug.StartWithoutDebugging");
-      commandDebugStartWithoutDebuggingEvents = dte.Events.CommandEvents[command.Guid, command.ID];
-      commandDebugStartWithoutDebuggingEvents.BeforeExecute += BeforeDebugStarted;
-      command = dte.Commands.Item("Debug.StartDebugTarget");
-      commandDebugStartDebugTargetEvents = dte.Events.CommandEvents[command.Guid, command.ID];
-      commandDebugStartDebugTargetEvents.BeforeExecute += BeforeDebugStarted;
-      command = dte.Commands.Item("Debug.Start");
-      commandDebugStartEvents = dte.Events.CommandEvents[command.Guid, command.ID];
-      commandDebugStartEvents.BeforeExecute += BeforeDebugStarted;
       }
-
-    private void CreateParamsFile(ParsedRow parsedRow)
-      {
-      ThreadHelper.ThrowIfNotOnUIThread();
-      string paramsFile = testSystemRoot + @"\Intermediate\AlgoTesterParams.input";
-      Directory.CreateDirectory(Path.GetDirectoryName(paramsFile));
-      var file = new StreamWriter(paramsFile);
-      file.WriteLine("--cases_root");
-      file.WriteLine(parsedRow.testCase.caseFolder);
-      file.WriteLine("--settings");
-      file.WriteLine(testSystemRoot + @"\settings.config");
-      file.WriteLine("--bins_root");
-      file.WriteLine(((dynamic)parsedRow.project.Object).ActiveConfiguration.OutputDirectory);
-      file.WriteLine("--restrictions");
-      file.WriteLine("");
-      file.WriteLine("--case");
-      file.WriteLine(parsedRow.testCase.caseName);
-      file.WriteLine(parsedRow.testCaseArguments);
-      file.Close();
-      }
-
-    private void BeforeDebugStarted(string Guid, int ID, object CustomIn, object CustomOut, ref bool CancelDefault)
-      {
-      ThreadHelper.ThrowIfNotOnUIThread();
-      if (dataGrid.SelectedItem == null || dte.Debugger.DebuggedProcesses.Count != 0)
-        return;
-      try
-        {
-        var parsedRow = ParseRow((dataGrid.SelectedItem as DataRowView).Row);
-        if (parsedRow == null || parsedRow.testCase == null)
-          return;
-
-        // generate params file
-        CreateParamsFile(parsedRow);
-        }
-      catch (Exception ex)
-        {
-        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
-        }
-      }
-
+   
     class ParsedRow
       {
-      public Project project;
+      public Project project = null;
+      public string title;
       public string fileName; // file in solution associated with this row
       public int lineNumber; // line in file
       public string command; // command for debugging 
       public string commandArguments; // arguments
-      public string testCaseArguments; // additional arguments provided by user
-      public DataBaseRefresher.DataBase.TestCase testCase; // test case
+      public DataBaseRefresher.DataBase.TestCase testCase = null; // test case
       };
 
     private void ParseFileNameWithLineNumber(string fileNameWithLineIndex, out string fileName, out int lineNumber)
@@ -239,6 +186,11 @@ namespace DebugAddin.CmdArgsToolWindow
       return result;
       }
 
+    private string ReplaceBackslashesWithSlashes(string str)
+      { 
+      return str.Replace('\\', '/');
+      }
+
     private ParsedRow ParseRow(DataRow row)
       {
       ThreadHelper.ThrowIfNotOnUIThread();
@@ -248,14 +200,16 @@ namespace DebugAddin.CmdArgsToolWindow
       if (arguments == null)
         return null;
 
+      ParsedRow parsedRow = new ParsedRow();
+      parsedRow.title = arguments.Replace("-", "‐"); // replcace &#45 with &#8208
+
       string restArguments = arguments;
       string firstArgument = GetFirstArgument(ref restArguments);
 
-      ParsedRow parsedRow = new ParsedRow();
       parsedRow.testCase = dataBase?.FindCaseByName(firstArgument);
 
       // Example: M3DTriangleTree_collision_0 --numthreads 1
-      if (parsedRow.testCase != null)
+      if (parsedRow.testCase != null && testSystemRoot != null)
         {
         ParseFileNameWithLineNumber(parsedRow.testCase.sourceFile, out parsedRow.fileName, out parsedRow.lineNumber);
         parsedRow.project = dte.Solution.FindProjectItem(parsedRow.fileName)?.ContainingProject;
@@ -265,15 +219,18 @@ namespace DebugAddin.CmdArgsToolWindow
           System.Windows.Forms.MessageBox.Show("Testable project is not found:\n" + parsedRow.fileName);
           }
 
-        parsedRow.command = testSystemRoot + @"Utils\AlgoTester.exe";
-        parsedRow.commandArguments = @"--paramsfile """ + testSystemRoot + @"Intermediate\AlgoTesterParams.input""";
-        parsedRow.testCaseArguments = restArguments;
+        parsedRow.command = testSystemRoot + @"AlgoTester.exe";
+        parsedRow.commandArguments = 
+          @"--cases_root """ + ReplaceBackslashesWithSlashes(parsedRow.testCase.caseFolder) + @""" " +
+          @"--settings """ + ReplaceBackslashesWithSlashes(testSystemRoot) + @"../settings.config"" " +
+          @"--bins_root """ + ReplaceBackslashesWithSlashes(((dynamic)parsedRow.project.Object).ActiveConfiguration.OutputDirectory) + @""" " +
+          @"--case " + parsedRow.testCase.caseName + @" " + 
+          @"--additionaltime 86400000 " +
+          restArguments;
         }
       else
         {
         ParseFileNameWithLineNumber(row["Filename"] as string, out parsedRow.fileName, out parsedRow.lineNumber);
-
-        parsedRow.project = null;
         foreach (Project p in Utils.GetAllProjectsInSolution())
           if (p.Name == firstArgument)
             {
@@ -285,11 +242,12 @@ namespace DebugAddin.CmdArgsToolWindow
           {
           // Example: -test UserTest
           parsedRow.project = dte.Solution.FindProjectItem(parsedRow.fileName)?.ContainingProject;
-          }        
-        
+          parsedRow.commandArguments = arguments;
+          }
+        else
+          parsedRow.commandArguments = restArguments;
+
         parsedRow.command = "$(TargetPath)";
-        parsedRow.commandArguments = restArguments;
-        parsedRow.testCaseArguments = null;
         }
 
       return parsedRow;
@@ -313,6 +271,30 @@ namespace DebugAddin.CmdArgsToolWindow
       }
 
     public CmdArgsToolWindow toolwindow;
+    private void SetStartupFromRow(ParsedRow parsedRow)
+      { 
+      ThreadHelper.ThrowIfNotOnUIThread();
+      if (parsedRow == null || parsedRow.project == null)
+        return;
+      try
+        {
+        dynamic vcPrj = (dynamic)parsedRow.project.Object; // is VCProject
+        dynamic vcCfg = vcPrj.ActiveConfiguration; // is VCConfiguration
+        dynamic vcDbg = vcCfg.DebugSettings;  // is VCDebugSettings
+        vcDbg.Command = parsedRow.command;
+        vcDbg.CommandArguments = parsedRow.commandArguments;
+        toolwindow.Caption = "Args: " + parsedRow.title;
+        UIHierarchyItem item = Utils.FindUIHierarchyItem(parsedRow.project);
+        item.Select(vsUISelectionType.vsUISelectionTypeSelect);
+        if (dte.Solution.SolutionBuild.BuildState != vsBuildState.vsBuildStateInProgress)
+          dte.Solution.Properties.Item("StartupProject").Value = parsedRow.project.Name;
+        }
+      catch (Exception ex)
+        {
+        Utils.PrintMessage("Exception", ex.Message + "\n" + ex.StackTrace, true);
+        }        
+      }
+
     private void SetStartupFromRow(DataRow row)
       {
       ThreadHelper.ThrowIfNotOnUIThread();
@@ -320,24 +302,7 @@ namespace DebugAddin.CmdArgsToolWindow
         return;
       try
         {
-        var parsedRow = ParseRow(row);
-
-        if (parsedRow == null || parsedRow.project == null)
-          return;
-        dynamic vcPrj = (dynamic)parsedRow.project.Object; // is VCProject
-        dynamic vcCfg = vcPrj.ActiveConfiguration; // is VCConfiguration
-        dynamic vcDbg = vcCfg.DebugSettings;  // is VCDebugSettings
-        vcDbg.Command = parsedRow.command;
-        vcDbg.CommandArguments = parsedRow.commandArguments;
-
-        string caption = row["CommandArguments"] as string;
-        toolwindow.Caption = "Args: " + caption.Replace("-", "‐"); // replcace &#45 with &#8208
-
-        UIHierarchyItem item = Utils.FindUIHierarchyItem(parsedRow.project);
-        item.Select(vsUISelectionType.vsUISelectionTypeSelect);
-
-        if (dte.Solution.SolutionBuild.BuildState != vsBuildState.vsBuildStateInProgress)
-          dte.Solution.Properties.Item("StartupProject").Value = parsedRow.project.Name;
+        SetStartupFromRow(ParseRow(row));
         }
       catch (Exception ex)
         {
