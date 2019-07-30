@@ -35,8 +35,17 @@ namespace DebugAddin
       return value;
       }
 
-    string global_expression;
-    int global_expression_counter;
+    struct DebugValue
+      {
+      public uint visualizerId;
+      public string variableName; // human readable name of a variable
+      public string expressionResult; // expression result, typically a pointer to variable
+      public string typeName; // type of variable
+      public string externalDumper; // expression to evaluate external dumper, typically a function
+      };
+
+    System.Collections.Generic.List<DebugValue> debugValues = new System.Collections.Generic.List<DebugValue>();
+
     string global_shell_file;
     int processId = 0;
     string load_library_result = "";
@@ -86,23 +95,24 @@ namespace DebugAddin
     void Dump(int expression_counter_old)
       {
       ThreadHelper.ThrowIfNotOnUIThread();
+      if (debugValues.Count != expression_counter_old)
+        return;
       Stopwatch sw = new Stopwatch();
       sw.Start();
       try
         {
-        if (expression_counter_old != global_expression_counter)
-          return;
-
         if (processId != dte.Debugger.CurrentProcess.ProcessID)
           {
+          dte.StatusBar.Text = "[Dumper] Loading dumpers...";
+
           load_library_result = ExecuteExpression(
-            "((void*(*)(wchar_t*))(" + 
-            RunLibInf64("kernel32.dll LoadLibraryW") + "+" + GetBaseAddress("kernel32.dll") + 
+            "((void*(*)(wchar_t*))(" +
+            RunLibInf64("kernel32.dll LoadLibraryW") + "+" + GetBaseAddress("kernel32.dll") +
             @"))(L""Dumper.dll"")");
           if (Parse(load_library_result, 16).GetValueOrDefault(0) == 0)
             throw new Exception("Load Library failure!");
 
-          global_shell_file = ExecuteExpression("((wchar_t*(*)())Dumper.dll!GetShellFilePath)()", true);
+          global_shell_file = ExecuteExpression("((wchar_t*(*)())Dumper.dll!LoadDumpers)()", true);
           global_shell_file = Regex.Match(global_shell_file, @"L""(.*)""$").Groups[1].Value;
           global_shell_file = Regex.Replace(global_shell_file, @"\\(\\|""|')", "$1");
           Utils.PrintMessage("Dumper", "[Dumper] Shell file: " + global_shell_file);
@@ -110,14 +120,36 @@ namespace DebugAddin
           }
 
         dte.StatusBar.Text = "[Dumper] Dumping...";
-        string result = ExecuteExpression(@"((int(*)(wchar_t*))Dumper.dll!Dump)(L""" + global_expression_counter.ToString() + global_expression + @""")");
+
+        string constructedExpression = "";
+        string result = "";
+        foreach (var debugValue in debugValues)
+          {
+          if (debugValue.visualizerId > 1000)
+            {
+            result = ExecuteExpression(debugValue.externalDumper);
+            if (Parse(result, 16).GetValueOrDefault(0) == 0)
+              throw new Exception(@"""" + debugValue.externalDumper + @""" is not found!");
+            }
+          constructedExpression = constructedExpression + 
+              " " + debugValue.visualizerId.ToString() +
+              " " + debugValue.expressionResult +
+              " " + debugValue.variableName +
+              " " + debugValue.typeName; 
+          
+          if (debugValue.visualizerId > 1000)
+            constructedExpression = constructedExpression + " " + result;
+          }
+          
+        result = ExecuteExpression(@"((int(*)(wchar_t*))Dumper.dll!Dump)(L""" + 
+          debugValues.Count.ToString() + constructedExpression + @""")");
 
         if (result != "0")
           {
-          ExecuteExpression("((void(*)())Dumper.dll!Unload)()");
+          ExecuteExpression("((void(*)())Dumper.dll!UnloadDumpers)()");
           result = ExecuteExpression(
-            "((int(*)(void*))(" + 
-            RunLibInf64("kernel32.dll FreeLibrary") + "+" + GetBaseAddress("kernel32.dll") + 
+            "((int(*)(void*))(" +
+            RunLibInf64("kernel32.dll FreeLibrary") + "+" + GetBaseAddress("kernel32.dll") +
             "))(" + load_library_result + ")");
           if (Parse(result).GetValueOrDefault(0) == 0)
             throw new Exception("Free Library failure!");
@@ -142,8 +174,7 @@ namespace DebugAddin
         }
       sw.Stop();
       Utils.PrintMessage("Dumper", "[Dumper] Elapsed time: " + sw.Elapsed.ToString());
-      global_expression = "";
-      global_expression_counter = 0;
+      debugValues.Clear();
       }
 
     public int DisplayValue(uint ownerHwnd, uint visualizerId, IDebugProperty3 debugProperty)
@@ -163,6 +194,9 @@ namespace DebugAddin
           0,
           propertyInfo);
 
+        DebugValue debugValue = new DebugValue();
+        debugValue.visualizerId = visualizerId;
+
         int index = propertyInfo[0].bstrType.IndexOf(" {");
         if (index != -1)
           propertyInfo[0].bstrType = propertyInfo[0].bstrType.Remove(index);
@@ -172,51 +206,46 @@ namespace DebugAddin
         string variableName = propertyInfo[0].bstrName;
         if (propertyInfo[0].bstrFullName != propertyInfo[0].bstrName)
           variableName = Regex.Match(propertyInfo[0].bstrFullName, @"^[^$.-]*").Value + "..." + variableName;
-        variableName = Regex.Replace(variableName, @"[""'\/ ]", "_");
+        debugValue.variableName = Regex.Replace(variableName, @"[""'\/ ]", "_");
 
-        string expression = ExecuteExpression((isPointer ? "" : "&") + propertyInfo[0].bstrFullName);
-        if (Parse(expression, 16).GetValueOrDefault(0) == 0)
+        debugValue.expressionResult = ExecuteExpression((isPointer ? "" : "&") + propertyInfo[0].bstrFullName);
+        if (Parse(debugValue.expressionResult, 16).GetValueOrDefault(0) == 0)
           throw new Exception("Incorrect argument!");
 
-        string typeName;
-        string dumpFunctionAddress = "0";
-        if (true)
-          {
-          if (visualizerId > 1000)
-            {
-            DEBUG_CUSTOM_VIEWER[] viewers = new DEBUG_CUSTOM_VIEWER[1];
-            debugProperty.GetCustomViewerList(0, 1, viewers, out _);
-            dumpFunctionAddress = ExecuteExpression(viewers[0].bstrMenuName).Split(' ')[0];
-            if (Parse(dumpFunctionAddress, 16).GetValueOrDefault(0) == 0)
-              throw new Exception("External dumper is not found!");
-            typeName = viewers[0].bstrDescription;
-            }
-          else if (isReference)
-            {
-            int length = propertyInfo[0].bstrType.Length;
-            typeName = propertyInfo[0].bstrType.Substring(0, length - 1) + " *";
-            }
-          else if (isPointer)
-            typeName = propertyInfo[0].bstrType;
-          else
-            typeName = propertyInfo[0].bstrType + " *";
-          }
-        typeName = @"\""" + Regex.Replace(typeName, @"[\w.]+!", "") + @"\""";
-
-        global_expression = global_expression
-          + " " + visualizerId.ToString()
-          + " " + expression
-          + " " + variableName
-          + " " + typeName;
-        global_expression_counter += 1;
-
+        string typeName = null;
         if (visualizerId > 1000)
-          global_expression += " " + dumpFunctionAddress;
+          {
+          debugProperty.GetCustomViewerCount(out uint viewersCount);
+          DEBUG_CUSTOM_VIEWER[] viewers = new DEBUG_CUSTOM_VIEWER[viewersCount];
+          debugProperty.GetCustomViewerList(0, viewersCount, viewers, out uint _);
 
-        int expression_counter_value = global_expression_counter;
+          for (uint i=0; i != viewersCount; ++i)
+            if (System.Guid.Parse(viewers[i].bstrMetric) == typeof(IRuntimeDumperService).GUID
+              && viewers[i].dwID == visualizerId)
+              {
+              debugValue.externalDumper = viewers[i].bstrMenuName;
+              typeName = viewers[i].bstrDescription;
+              break;
+              }
+          if (debugValue.externalDumper is null)
+            throw new Exception("External dumper is not found!");
+          }
+        else if (isReference)
+          {
+          int length = propertyInfo[0].bstrType.Length;
+          typeName = propertyInfo[0].bstrType.Substring(0, length - 1) + " *";
+          }
+        else if (isPointer)
+          typeName = propertyInfo[0].bstrType;
+        else
+          typeName = propertyInfo[0].bstrType + " *";
+        debugValue.typeName = @"\""" + Regex.Replace(typeName, @"[\w.]+!", "") + @"\""";
+
+        debugValues.Add(debugValue);
+        int count = debugValues.Count;
         _ = System.Threading.Tasks.Task.Delay(1000).ContinueWith(t =>
             {
-              Dump(expression_counter_value);
+              Dump(count);
             }, System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext());
         }
       catch (Exception ex)
