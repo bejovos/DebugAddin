@@ -10,6 +10,8 @@ namespace DebugAddin.CaretCommands
   {
   internal sealed class NextWordCommand
     {
+    public static int previousCommand = 0;
+
     public const int CommandId = 0x0100;
     public static readonly Guid CommandSet = new Guid("925c9a20-7c34-4406-b9a8-17a1b657d1d1");
     private readonly AsyncPackage package;
@@ -49,45 +51,76 @@ namespace DebugAddin.CaretCommands
       }
 
     DTE2 dte = (DTE2)Package.GetGlobalService(typeof(DTE));
-    IVsTextManager textManager = (IVsTextManager)Package.GetGlobalService(typeof(SVsTextManager));
-
-    private int GetLastPosition(string line)
-      {
-      if (line != null)
-        for (int i = line.Length - 1; i >= 0; --i)
-          if (line[i] != ' ' && line[i] != '\r' && line[i] != '\n')
-            return i + 1;
-      return -1;
-      }
+    IVsTextManager2 textManager = (IVsTextManager2)Package.GetGlobalService(typeof(SVsTextManager));
 
     public void Execute(object sender, EventArgs e)
       {
-      textManager.GetActiveView(1, null, out IVsTextView textView);
-      textView.GetCaretPos(out int lineOld, out int columnOld);
-      dte.ExecuteCommand("Edit.WordNext");
-      textView.GetCaretPos(out int lineNew, out int columnNew);
+      textManager.GetActiveView2(1, null, (uint)_VIEWFRAMETYPE.vftAny, out IVsTextView textView);
+      textView.GetCaretPos(out int line, out int index);
+      
+      IVsTextLines textLines;
+      textView.GetBuffer(out textLines);
+      string buffer;
+      int lineLength;
+      textLines.GetLengthOfLine(line, out lineLength);
+      textLines.GetLineText(line, 0, line, lineLength, out buffer);
+      while (lineLength > 0 && buffer[lineLength - 1] == ' ')
+        lineLength -= 1;
+      int frontWhitespaces = 0;
+      while (frontWhitespaces < lineLength && buffer[frontWhitespaces] == ' ')
+        frontWhitespaces += 1;
 
-      if (lineNew == lineOld)
+      int wordsCount = 1;
+      bool includeWhitespacesInWord = false;
+      if (previousCommand == 0b1)
         {
-        IVsTextLines lines = null;
-        textView.GetBuffer(out lines);
-        lines.GetLengthOfLine(lineOld, out int lineLength);
-        if (lineLength != columnNew)
-          return;
+        //wordsCount += 1; 
+        includeWhitespacesInWord = true;
         }
-
-      textView.GetTextStream(lineOld, columnOld, lineOld + 1, 0, out string line);             
-      int lastPosition = GetLastPosition(line);
-      if (lastPosition == -1)
+      previousCommand = ((previousCommand << 1) + 1) & 1;
+      if (index >= lineLength)
         {
-        textView.SetCaretPos(lineOld, 0);              
-        if (columnOld == 0)
+        if (lineLength == 0)
           dte.ExecuteCommand("Edit.LineEnd");
-        else
-          dte.ExecuteCommand("Edit.LineStart");
+        else 
+          {
+          index = frontWhitespaces;
+          textView.SetCaretPos(line, index);
+          }
+        return;
         }
-      else 
-        textView.SetCaretPos(lineOld, columnOld + lastPosition);
+      
+      TextSpan[] span = new TextSpan[1];
+      for (; index < lineLength && wordsCount != 0; wordsCount -= 1)
+        {
+        if (buffer[index] == ' ')
+          {
+          while (index < lineLength && buffer[index] == ' ')
+            index += 1;
+          continue;  
+          }
+
+        textView.GetWordExtent(line, index, (uint)WORDEXTFLAGS.WORDEXT_NEXT + (uint)WORDEXTFLAGS.WORDEXT_FINDTOKEN, span);
+        if (span[0].iStartIndex != span[0].iEndIndex)
+          { 
+          if (index == span[0].iEndIndex)  
+            index += 1;
+          else
+            index = span[0].iEndIndex;
+          }
+        else
+          {
+          index += 1;
+          }
+
+        if (includeWhitespacesInWord)
+          {
+          while (index < lineLength && buffer[index] == ' ')
+            index += 1;
+          }
+        continue;
+        }
+      textView.SetCaretPos(line, index);
       }
     }
   }

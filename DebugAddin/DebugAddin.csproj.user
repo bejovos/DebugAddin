@@ -4,7 +4,7 @@
     <EnableUnmanagedDebugging>true</EnableUnmanagedDebugging>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'Release|AnyCPU'">
-    <EnableUnmanagedDebugging>true</EnableUnmanagedDebugging>
+    <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <PropertyGroup>
     <ProjectView>ProjectFiles</ProjectView>
