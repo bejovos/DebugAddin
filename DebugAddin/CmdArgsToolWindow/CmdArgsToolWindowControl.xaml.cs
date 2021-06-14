@@ -224,7 +224,7 @@ namespace DebugAddin.CmdArgsToolWindow
           @"--cases_root """ + ReplaceBackslashesWithSlashes(parsedRow.testCase.caseFolder) + @""" " +
           @"--settings """ + ReplaceBackslashesWithSlashes(testSystemRoot) + @"../settings.config"" " +
           @"--bins_root """ + ReplaceBackslashesWithSlashes(((dynamic)parsedRow.project.Object).ActiveConfiguration.OutputDirectory) + @""" " +
-          @"--case " + parsedRow.testCase.caseName + @" " + 
+          @"--case """ + parsedRow.testCase.caseName + @""" " + 
           @"--additionaltime 86400000 " +
           restArguments;
         }
